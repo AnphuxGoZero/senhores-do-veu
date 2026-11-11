@@ -234,13 +234,15 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 /* ---------- Celular deitado (classe "paisagem" no <html>, ligada pelo ajustaTela) ---------- */
 /* O mapa ocupa a tela inteira; por cima dele fica só o necessário: turno e MP, relógio, centralizar,
    Cancelar, Registro e Encerrar turno. A ficha aparece apenas quando há criatura selecionada ou apontada. */
-html.paisagem,.paisagem body{height:100%;overflow:hidden;overscroll-behavior:none}
-.paisagem #app{display:block;padding:0;max-width:none}
+html.paisagem,.paisagem body{height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg)}
+/* fixed + inset:0 acompanha a área realmente visível no Safari (a barra do navegador encolhe e cresce);
+   com altura de 100% a página ficava maior que a tela: a cena de combate cortava embaixo e os toques nos botões de baixo se perdiam */
+.paisagem #app{display:block;position:fixed;inset:0;padding:0;max-width:none}
 .paisagem #colMapa,.paisagem #lado,.paisagem #ladoIn{display:contents}
 .paisagem #mapa{position:absolute;inset:0} /* absolute (e não fixed) para a tela inicial conseguir cobrir os botões do topo */
 .paisagem #cv{position:absolute;inset:0;width:100%;height:100%;border-radius:0}
 .paisagem #mini{display:none}
-.paisagem #cena{width:auto;height:92%}
+.paisagem #cena{width:auto;height:auto;max-width:96%;max-height:88%}
 /* barra do topo: peças soltas e translúcidas, sem faixa de fundo */
 .paisagem #topoMapa{position:fixed;left:6px;right:6px;top:6px;z-index:5;display:flex;justify-content:space-between;align-items:flex-start;gap:6px;
   background:none!important;border:none;padding:0;height:auto;pointer-events:none}
@@ -258,12 +260,13 @@ html.paisagem,.paisagem body{height:100%;overflow:hidden;overscroll-behavior:non
 .paisagem #menuJogo{left:0;top:44px}
 .paisagem #dicaMapa{top:50px;left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:min(460px,70vw)}
 /* canto de baixo, à direita: Registro e Encerrar turno */
-.paisagem #linhaFim{position:fixed;right:6px;bottom:6px;z-index:5}
+.paisagem #linhaFim{position:fixed;right:8px;bottom:12px;z-index:6} /* longe da borda: no iPhone, tocar rente ao pé da tela é gesto do sistema */
+.paisagem #btCancela{bottom:12px}
 .paisagem #btLog{display:block;flex:none;background:#1d2029e6}
 .paisagem #btLog .rot{display:none}
 .paisagem #btFim{flex:none;padding:10px 16px;box-shadow:0 4px 14px #000a}
 /* ficha: faixa baixa no meio, entre o Cancelar (esquerda) e os botões da direita; some quando vazia */
-.paisagem #info{position:fixed;left:128px;right:210px;bottom:6px;z-index:4;min-height:0;max-height:96px;overflow-y:auto;
+.paisagem #info{position:fixed;left:128px;right:214px;bottom:12px;z-index:4;min-height:0;max-height:96px;overflow-y:auto;
   padding:5px 8px;font-size:11.5px;background:#1d2029ee;border-color:#3c4356;box-shadow:0 4px 18px #000b;display:flex;flex-direction:column;gap:4px}
 .paisagem #info.vazio{display:none}
 .paisagem #info>*{flex:none}
@@ -449,7 +452,8 @@ const zMaxToque=()=>TELA_LIVRE()?zBase()*2:ZOOM_MAX_TOQUE;
 // celular: a partida abre perto do mestre, com casas de ~58 px na tela. Assim o jogador é apresentado à sua área
 // inicial e as casas de invocação ficam fáceis de tocar; para ver mais do mapa, é só afastar com a pinça.
 const zInicio=()=>Math.min(zBase()*2,Math.max(zBase(),58*TW/(W*LARG_CSS)));
-function zoomInicio(){if(!TELA_LIVRE())return;CAM.z=CAM.zAlvo=CAM.zPref=zInicio();mostraZoom();}
+// celular em pé, partida nova: abre no zoom máximo, com o mestre bem à vista
+function zoomInicio(novo){if(!TELA_LIVRE())return;CAM.z=CAM.zAlvo=CAM.zPref=novo&&RETRATO()?zMaxToque():zInicio();mostraZoom();}
 function mostraZoom(){document.getElementById('zoomN').textContent=Math.round(CAM.zPref/zBase()*100)+'%';}
 // Mede o espaço do mapa e acerta a tela (TW×TH) e o canvas. Também liga/desliga o modo "retrato" (celular em pé),
 // em que o mapa preenche a área que sobra da tela em vez de ter proporção fixa. Chamado ao iniciar e a cada mudança de tamanho.
@@ -868,7 +872,7 @@ function novoJogo(op=prefs()){
      ...estadoMagiaNovo([op.ordem,ordemIA],0)}; // mana só pela renda (padrão do jogo)
   criaUnidade(ORDENS[op.ordem].esp,0,...m.f0);
   criaUnidade(ORDENS[ordemIA].esp,1,...m.f1);
-  zoomInicio();
+  zoomInicio(true);
   {const [x,y]=centro(...m.f0);CAM.x=x;CAM.y=y;CAM.alvo=null;limitaCam();}
   log(`Mapa: ${m.tema}. Capture as torres e derrote ${ART(1)} ${NM(1)}.`);
   log(`Seu mestre: ${NM(0)}. Mestre inimigo: ${NM(1)}.`);
