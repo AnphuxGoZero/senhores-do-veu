@@ -108,7 +108,8 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .vantLinha{display:flex;flex-wrap:wrap;align-items:center;gap:3px;font-size:11.5px;color:var(--dim)}
 .vantLinha i{font-style:normal;color:#fff;font-size:10.5px;padding:0 6px;border-radius:8px;line-height:16px}
 .vantLinha span+span,.vantLinha i+span{margin-left:3px} /* altura reservada: o registro não pula quando a ficha muda */
-#btFim{flex:none;padding:12px;font-size:15px;font-weight:600;letter-spacing:.02em}
+#btFim{flex:1;padding:12px;font-size:15px;font-weight:600;letter-spacing:.02em}
+#linhaFim{display:flex;gap:6px;flex:none}#btLog{display:none}
 #caixaLog{flex:1 1 0;min-height:64px;overflow:hidden;display:flex;flex-direction:column} /* o registro fica com o que sobrar e é o único que rola */
 #caixaLog #log{flex:1;max-height:none;min-height:0}
 .ficha{display:flex;flex-direction:column;gap:6px}
@@ -160,7 +161,7 @@ button{touch-action:manipulation}
 @media (max-width:900px) and (orientation:portrait),(max-width:900px) and (min-height:521px){
   #app{padding:6px;gap:6px}
   #colMapa,#lado,#ladoIn{display:contents}
-  #topoMapa{order:1}#mapa{order:2;flex:none}#info{order:3;min-height:128px}#btFim{order:4}#rodape{order:5}#mini{order:6;max-width:420px}#caixaLog{order:7;flex:none;max-height:210px}
+  #topoMapa{order:1}#mapa{order:2;flex:none}#info{order:3;min-height:128px}#linhaFim{order:4}#rodape{order:5}#mini{order:6;max-width:420px}#caixaLog{order:7;flex:none;max-height:210px}
   .toque #mini{display:none} /* no toque, arrastar o próprio mapa substitui o mini mapa */
   #cena{width:min(600px,96%)}
 }
@@ -186,7 +187,7 @@ button{touch-action:manipulation}
   #lado{flex:1;width:auto;min-width:0}
   #ladoIn{gap:6px}
   #mini{display:none}
-  #btFim{order:-1}
+  #linhaFim{order:-1}
   #info{min-height:0;flex:0 1 auto;overflow:auto}
   .nomeJogo{display:none}
   h1 .bt:first-of-type{margin-left:0}
@@ -194,6 +195,83 @@ button{touch-action:manipulation}
   #topoMapa #relogio .quadro{width:34px;height:34px}
   #zoomN{display:none}
 }
+
+/* ---------- Celular em pé (classe "retrato" no <html>, ligada pelo ajustaTela) ---------- */
+/* Tudo cabe numa tela, sem rolar a página: topo fino, mapa com pelo menos 60% da altura, ficha, placar e botões. */
+html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
+.retrato #app{height:100vh;height:100dvh;padding:4px;gap:4px;max-width:none}
+.retrato #topoMapa{order:1;flex:none;height:46px;padding:3px 6px;gap:6px;grid-template-columns:1fr auto auto}
+.retrato #topoMapa>div:first-child{display:flex;align-items:center;gap:6px;min-width:0}
+.retrato #topoMapa h1{display:flex;gap:4px;flex:none}
+.retrato .nomeJogo{display:none}
+.retrato h1 .bt{margin:0}
+.retrato #vez{font-size:12px;line-height:1.2;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.retrato #topoMapa #relogio{column-gap:6px}
+.retrato #topoMapa #relogio .quadro{width:34px;height:34px}
+.retrato #zoomUI button:not(:last-child),.retrato #zoomN{display:none}
+.retrato #menuJogo{top:48px;left:4px}
+.retrato #mapa{order:2;flex:1 0 60vh;flex:1 0 60dvh;min-height:0}
+.retrato #cv{position:absolute;inset:0;width:100%;height:100%}
+.retrato #menuM{max-height:58vh;max-height:58dvh}
+#dicaMapa{position:absolute;left:6px;right:6px;top:6px;z-index:2;pointer-events:none}
+#dicaMapa .prev{margin:0;padding:5px 9px;font-size:12px;background:#2a2230eb;border:1px solid #5a4a6a;box-shadow:0 4px 14px #0009}
+.retrato #info{order:3;flex:0 1 150px;min-height:64px;overflow-y:auto;padding:6px 8px;font-size:12px;display:flex;flex-direction:column;gap:5px}
+.retrato #info>*{flex:none}
+.retrato #info>.prev{order:-1;margin:0!important;padding:4px 8px;font-size:12px} /* dica da ação e previsão do ataque sempre no topo */
+.retrato #info .terr{margin-top:0;padding-top:5px}
+.retrato #rodape{order:4;flex:none;padding:4px 8px;font-size:12px;gap:8px}
+.retrato #rodape .quem{margin-bottom:0}
+.retrato #linhaFim{order:5;flex:none}
+.retrato #btLog{display:block;flex:none}
+.retrato #btFim{padding:10px}
+.retrato #mini{display:none}
+.retrato #caixaLog{display:none}
+.retrato #caixaLog.aberto{display:flex;position:fixed;left:4px;right:4px;bottom:56px;max-height:60vh;max-height:60dvh;z-index:8;border-color:#4a5268;box-shadow:0 -6px 30px #000d}
+.retrato #caixaLog.aberto #log{overflow:auto}
+
+/* ---------- Celular deitado (classe "paisagem" no <html>, ligada pelo ajustaTela) ---------- */
+/* O mapa ocupa a tela inteira; por cima dele fica só o necessário: turno e MP, relógio, centralizar,
+   Cancelar, Registro e Encerrar turno. A ficha aparece apenas quando há criatura selecionada ou apontada. */
+html.paisagem,.paisagem body{height:100%;overflow:hidden;overscroll-behavior:none}
+.paisagem #app{display:block;padding:0;max-width:none}
+.paisagem #colMapa,.paisagem #lado,.paisagem #ladoIn{display:contents}
+.paisagem #mapa{position:fixed;inset:0}
+.paisagem #cv{position:absolute;inset:0;width:100%;height:100%;border-radius:0}
+.paisagem #mini{display:none}
+.paisagem #cena{width:auto;height:92%}
+/* barra do topo: peças soltas e translúcidas, sem faixa de fundo */
+.paisagem #topoMapa{position:fixed;left:6px;right:6px;top:6px;z-index:5;display:flex;justify-content:space-between;align-items:flex-start;gap:6px;
+  background:none!important;border:none;padding:0;height:auto;pointer-events:none}
+.paisagem #topoMapa>*{pointer-events:auto}
+.paisagem #topoMapa>div:first-child{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
+.paisagem #topoMapa h1{display:flex;gap:4px;flex:none}
+.paisagem .nomeJogo{display:none}
+.paisagem h1 .bt{margin:0;background:#1d2029e6}
+.paisagem #vez{font-size:12px;background:#0e1015d9;border:1px solid #3c4356;border-radius:8px;padding:6px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.paisagem #topoMapa #relogio{background:#0e1015d9;border:1px solid #3c4356;border-radius:8px;padding:2px 8px 2px 3px;column-gap:6px}
+.paisagem #topoMapa #relogio .quadro{width:30px;height:30px}
+.paisagem #topoMapa #zoomUI{flex:none}
+.paisagem #zoomUI button:not(:last-child),.paisagem #zoomN{display:none}
+.paisagem #zoomUI button{background:#1d2029e6}
+.paisagem #menuJogo{left:0;top:44px}
+.paisagem #dicaMapa{top:50px;left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:min(460px,70vw)}
+/* canto de baixo, à direita: Registro e Encerrar turno */
+.paisagem #linhaFim{position:fixed;right:6px;bottom:6px;z-index:5}
+.paisagem #btLog{display:block;flex:none;background:#1d2029e6}
+.paisagem #btLog .rot{display:none}
+.paisagem #btFim{flex:none;padding:10px 16px;box-shadow:0 4px 14px #000a}
+/* ficha: faixa baixa no meio, entre o Cancelar (esquerda) e os botões da direita; some quando vazia */
+.paisagem #info{position:fixed;left:128px;right:210px;bottom:6px;z-index:4;min-height:0;max-height:96px;overflow-y:auto;
+  padding:5px 8px;font-size:11.5px;background:#1d2029ee;border-color:#3c4356;box-shadow:0 4px 18px #000b;display:flex;flex-direction:column;gap:4px}
+.paisagem #info.vazio{display:none}
+.paisagem #info>*{flex:none}
+.paisagem #info>.prev{order:-1;margin:0!important;padding:3px 8px;font-size:11.5px}
+.paisagem #info .terr{margin-top:0;padding-top:4px}
+/* registro e placar: só com o botão 📜 */
+.paisagem #rodape,.paisagem #caixaLog{display:none}
+.paisagem #rodape.aberto{display:grid;position:fixed;right:6px;top:52px;width:min(380px,60vw);z-index:8;border-color:#4a5268;box-shadow:0 6px 30px #000d}
+.paisagem #caixaLog.aberto{display:flex;position:fixed;right:6px;top:168px;bottom:56px;width:min(380px,60vw);z-index:8;border-color:#4a5268;box-shadow:0 6px 30px #000d}
+.paisagem #caixaLog.aberto #log{overflow:auto}
 </style>
 </head>
 <body>
@@ -205,13 +283,13 @@ button{touch-action:manipulation}
     <div id="zoomUI"><button onclick="mudaZoom(-1)" title="Afastar (−)">−</button><span id="zoomN">160%</span><button onclick="mudaZoom(1)" title="Aproximar (+)">+</button><button onclick="seguir(mestreDe(0),true)" title="Centralizar no seu mestre">⌖</button></div>
     <div id="menuJogo"></div>
   </div>
-  <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
+  <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
   <div class="barra-mapa" id="rodape"></div>
   </div>
   <div id="lado"><div id="ladoIn">
     <canvas id="mini" title="Mini mapa: clique ou arraste para mover a câmera"></canvas>
     <div class="cx" id="info"></div>
-    <button class="pri" id="btFim" onclick="fimTurno()">Encerrar turno</button>
+    <div id="linhaFim"><button id="btLog" onclick="alternaLog(event)" aria-label="Registro">📜<span class="rot"> Registro</span></button><button class="pri" id="btFim" onclick="fimTurno()">Encerrar turno</button></div>
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
@@ -246,7 +324,7 @@ button{touch-action:manipulation}
 // Entra de início em celular/tablet e, num PC com tela de toque, no primeiro toque na tela.
 const TOQUE=()=>document.documentElement.classList.contains('toque');
 const TC=()=>TOQUE()?'✕ Cancelar':'Esc'; // como as dicas chamam o "cancelar"
-function marcaToque(){if(TOQUE())return;document.documentElement.classList.add('toque');if(typeof J!=='undefined'&&J)atualiza();}
+function marcaToque(){if(TOQUE())return;document.documentElement.classList.add('toque');ajustaTela();if(J)atualiza();}
 if(matchMedia('(pointer:coarse)').matches)document.documentElement.classList.add('toque');
 // ---------- App instalável (PWA) ----------
 // Só entra em ação quando o jogo é servido por http(s): o sw.js guarda o jogo para abrir sem internet
@@ -262,7 +340,18 @@ const COLS=17, ROWS=13, R=27, W=Math.sqrt(3)*R, PAD=10, LIM_EXERCITO=30, LIM_MAP
 const cv=document.getElementById('cv');
 // VW×VH = tamanho lógico do mapa; o canvas tem o dobro de resolução para o zoom ficar nítido
 const VW=Math.ceil(W*(COLS+0.5)+PAD*2),VH=Math.ceil(1.5*R*(ROWS-1)+2*R+PAD*2),RES=2;
-cv.width=VW*RES;cv.height=VH*RES;
+// TW×TH = tamanho lógico da TELA do mapa. No PC é igual ao mapa (VW×VH). No celular em pé a tela é mais alta
+// que o mapa: a largura continua VW e a altura acompanha o espaço disponível (ver ajustaTela). RV = resolução do canvas.
+let TW=VW,TH=VH,RV=RES;
+cv.width=TW*RV;cv.height=TH*RV;
+// zoom em que o mapa cobre a tela inteira, sem sobra (1 no PC). Os degraus de zoom são múltiplos dele.
+const zBase=()=>Math.max(TW/VW,TH/VH);
+const RETRATO=()=>document.documentElement.classList.contains('retrato');   // celular em pé
+const PAISAGEM=()=>document.documentElement.classList.contains('paisagem'); // celular deitado: mapa em tela cheia
+const TELA_LIVRE=()=>RETRATO()||PAISAGEM();
+// No celular deitado os controles ficam por cima do mapa. A folga (em px de tela) deixa a câmera passar um pouco
+// da borda de cima e de baixo, para nenhuma casa ficar presa embaixo da barra do topo ou da ficha.
+let FOLGA={t:0,b:0},LARG_CSS=1;
 let ctx=cv.getContext('2d'); // 'let': trocado temporariamente ao montar a camada de terreno
 const K=(c,r)=>r*COLS+c, DK=k=>[k%COLS,Math.floor(k/COLS)];
 function centro(c,r){return [PAD+W*(c+0.5*(r&1))+W/2, PAD+R+1.5*R*r];}
@@ -271,9 +360,12 @@ function centro(c,r){return [PAD+W*(c+0.5*(r&1))+W/2, PAD+R+1.5*R*r];}
 // arrastar o mapa ou usar as setas assume o controle até a próxima ação.
 const ZOOMS=[1,1.3,1.6,2];
 const CAM={z:1.6,zPref:1.6,zAlvo:1.6,x:VW/2,y:VH/2,alvo:null,centrar:false,mao:false,t:0};
-function limitaCam(){const hw=VW/(2*CAM.z),hh=VH/(2*CAM.z);CAM.x=Math.min(VW-hw,Math.max(hw,CAM.x));CAM.y=Math.min(VH-hh,Math.max(hh,CAM.y));}
-const paraTela=(x,y)=>[(x-CAM.x)*CAM.z+VW/2,(y-CAM.y)*CAM.z+VH/2];
-const paraMundo=(x,y)=>[(x-VW/2)/CAM.z+CAM.x,(y-VH/2)/CAM.z+CAM.y];
+// mantém a câmera dentro do mapa; num eixo em que a tela mostra o mapa inteiro, fica centrada
+const limX=x=>{const hw=TW/(2*CAM.z);return hw*2>=VW?VW/2:Math.min(VW-hw,Math.max(hw,x));};
+const limY=y=>{const hh=TH/(2*CAM.z),e=CAM.z*LARG_CSS/TW,lo=hh-FOLGA.t/e,hi=VH-hh+FOLGA.b/e;return lo>=hi?(lo+hi)/2:Math.min(hi,Math.max(lo,y));};
+function limitaCam(){CAM.x=limX(CAM.x);CAM.y=limY(CAM.y);}
+const paraTela=(x,y)=>[(x-CAM.x)*CAM.z+TW/2,(y-CAM.y)*CAM.z+TH/2];
+const paraMundo=(x,y)=>[(x-TW/2)/CAM.z+CAM.x,(y-TH/2)/CAM.z+CAM.y];
 function seguir(u,centrar=false){if(!u)return;CAM.alvo=u;CAM.centrar=centrar;CAM.mao=false;}
 function posUn(u){let [x,y]=centro(u.c,u.r);if(u.anim){const t=Math.min(1,(performance.now()-u.anim.t0)/u.anim.dur);x=u.anim.x0+(x-u.anim.x0)*t;y=u.anim.y0+(y-u.anim.y0)*t;}return [x,y];}
 function atualizaCam(now){
@@ -284,16 +376,18 @@ function atualizaCam(now){
   const u=CAM.alvo;
   CAM.parado=true;
   if(u&&!CAM.mao&&(u.fixo||J.un.includes(u))){
-    const [x,y]=posUn(u),hw=VW/(2*CAM.z),hh=VH/(2*CAM.z);
+    const [x,y]=posUn(u),hw=TW/(2*CAM.z);
+    // celular deitado: a área útil desconta as faixas cobertas pelos controles (FOLGA), para o alvo não parar embaixo deles
+    const esc=CAM.z*LARG_CSS/TW,dy=(FOLGA.t-FOLGA.b)/(2*esc),hh=TH/(2*CAM.z)-(FOLGA.t+FOLGA.b)/(2*esc),cy=CAM.y+dy;
     // zona morta larga: a câmera fica parada até o alvo chegar perto da borda (≈1,5 hexágono).
     // Quando precisa andar, anda de uma vez até deixá-lo bem para dentro, em vez de ir aos pouquinhos.
     const bx=hw-Math.min(hw*.3,W*1.6),by=hh-Math.min(hh*.3,R*2.4);
-    if(Math.abs(x-CAM.x)>bx||Math.abs(y-CAM.y)>by)CAM.reenq=true;
+    if(Math.abs(x-CAM.x)>bx||Math.abs(y-cy)>by)CAM.reenq=true;
     const mx=CAM.centrar?0:CAM.reenq?hw*.35:bx,my=CAM.centrar?0:CAM.reenq?hh*.35:by;
     let tx=CAM.x,ty=CAM.y;
     if(x<CAM.x-mx)tx=x+mx;else if(x>CAM.x+mx)tx=x-mx;
-    if(y<CAM.y-my)ty=y+my;else if(y>CAM.y+my)ty=y-my;
-    tx=Math.min(VW-hw,Math.max(hw,tx));ty=Math.min(VH-hh,Math.max(hh,ty)); // borda do mapa: não persegue o que não dá para alcançar
+    if(y<cy-my)ty=y+my-dy;else if(y>cy+my)ty=y-my-dy;
+    tx=limX(tx);ty=limY(ty); // borda do mapa: não persegue o que não dá para alcançar
     CAM.parado=Math.abs(tx-CAM.x)+Math.abs(ty-CAM.y)<3;
     const k=1-Math.exp(-dt*(movendo?9:7));CAM.x+=(tx-CAM.x)*k;CAM.y+=(ty-CAM.y)*k;
     if(Math.abs(tx-CAM.x)+Math.abs(ty-CAM.y)<1){CAM.centrar=false;CAM.reenq=false;}
@@ -302,20 +396,53 @@ function atualizaCam(now){
 }
 // leva a câmera até a casa e espera ela chegar (usado pela IA antes de agir)
 async function focar(c,r){
-  if(!VEL||CAM.zPref===1||document.hidden)return;
+  if(!VEL||(TW/CAM.zPref>=VW-1&&TH/CAM.zPref>=VH-1)||document.hidden)return; // mapa inteiro à vista: não há o que focar
   CAM.alvo={c,r,fixo:true};CAM.centrar=false;CAM.mao=false;CAM.parado=false;
   const t0=performance.now();
   while(performance.now()-t0<900){await new Promise(q=>setTimeout(q,30));if(CAM.parado)break;}
 }
 // ponto fixo do zoom: criatura ou construção selecionada > casa sob o mouse > centro da tela
 const ZOOM_MAX_TOQUE=2.6; // a pinça passa um pouco do último degrau: no celular as casas precisam caber no dedo
-function mostraZoom(){document.getElementById('zoomN').textContent=Math.round(CAM.zPref*100)+'%';}
+const zMaxToque=()=>TELA_LIVRE()?zBase()*2:ZOOM_MAX_TOQUE;
+function mostraZoom(){document.getElementById('zoomN').textContent=Math.round(CAM.zPref/zBase()*100)+'%';}
+// Mede o espaço do mapa e acerta a tela (TW×TH) e o canvas. Também liga/desliga o modo "retrato" (celular em pé),
+// em que o mapa preenche a área que sobra da tela em vez de ter proporção fixa. Chamado ao iniciar e a cada mudança de tamanho.
+function ajustaTela(){
+  const de=document.documentElement;
+  const toque=TOQUE();
+  const ret=toque&&matchMedia('(orientation:portrait) and (max-width:900px)').matches;
+  const pai=toque&&!ret&&matchMedia('(orientation:landscape) and (max-height:560px)').matches;
+  const mudouModo=ret!==RETRATO()||pai!==PAISAGEM();
+  de.classList.toggle('retrato',ret);de.classList.toggle('paisagem',pai);
+  FOLGA=pai?{t:48,b:108}:{t:0,b:0};
+  let th=VH,rv=RES;
+  if(ret||pai){
+    const m=document.getElementById('mapa'),w=m.clientWidth,h=m.clientHeight;
+    if(w<50||h<50)return; // ainda sem layout
+    LARG_CSS=w;
+    th=Math.round(VW*h/w);rv=Math.min(RES,Math.max(1,w*(devicePixelRatio||1)/VW));
+  }
+  if(th===TH&&rv===RV&&!mudouModo)return;
+  const antes=zBase();
+  TH=th;RV=rv;
+  const w=Math.round(TW*RV),h=Math.round(TH*RV);
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}
+  // o zoom é guardado em relação ao zBase: mantém o mesmo "grau" de aproximação na tela nova
+  const k=zBase()/antes;
+  if(k!==1){CAM.z*=k;CAM.zAlvo*=k;CAM.zPref*=k;}
+  if(mudouModo){
+    // ao entrar num modo de celular começa com o mapa cobrindo a tela; ao sair, volta para um degrau do PC
+    const z=ret||pai?zBase():ZOOMS.reduce((a,v)=>Math.abs(v-CAM.zPref)<Math.abs(a-CAM.zPref)?v:a);
+    CAM.z=CAM.zAlvo=CAM.zPref=z;
+  }
+  limitaCam();mostraZoom();if(J)atualiza();
+}
 function mudaZoom(d){
-  let sx=VW/2,sy=VH/2;
+  let sx=TW/2,sy=TH/2;
   const ref=!J?null:J.sel?[J.sel.c,J.sel.r]:J.invHex!=null?DK(J.invHex):J.hover;
   if(ref)[sx,sy]=paraTela(...centro(...ref));
   // degrau seguinte ao zoom atual (a pinça pode ter deixado o zoom entre dois degraus)
-  const z=CAM.zPref,n=d>0?(ZOOMS.find(v=>v>z+.01)??Math.max(z,ZOOMS[ZOOMS.length-1])):([...ZOOMS].reverse().find(v=>v<z-.01)??ZOOMS[0]);
+  const DG=ZOOMS.map(v=>v*zBase()),z=CAM.zPref,n=d>0?(DG.find(v=>v>z+.01)??Math.max(z,DG[DG.length-1])):([...DG].reverse().find(v=>v<z-.01)??DG[0]);
   if(n===z)return;
   const [ax,ay]=paraMundo(sx,sy);CAM.z=CAM.zAlvo=CAM.zPref=n;const [bx,by]=paraMundo(sx,sy);
   CAM.x+=ax-bx;CAM.y+=ay-by;limitaCam();
@@ -2847,7 +2974,7 @@ function desenha(now){
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);
   if(!J){requestAnimationFrame(desenha);return;}
   atualizaCam(now);
-  ctx.setTransform(RES*CAM.z,0,0,RES*CAM.z,RES*(VW/2-CAM.x*CAM.z),RES*(VH/2-CAM.y*CAM.z));
+  ctx.setTransform(RV*CAM.z,0,0,RV*CAM.z,RV*(TW/2-CAM.x*CAM.z),RV*(TH/2-CAM.y*CAM.z));
   // terreno vem de duas imagens prontas (colorida e cinza); só é redesenhado quando muda o dono de alguma construção
   const cam=camadaTerreno();
   ctx.drawImage(cam.cor,0,0,VW,VH);
@@ -2993,6 +3120,8 @@ function atualiza(){
   if(!J)return;
   relogio();
   document.getElementById('vez').innerHTML=J.fim?'Fim de jogo':`Turno ${J.turno} · ${J.vez===0?'<span style="color:var(--p0)">sua vez</span>':`<span style="color:var(--p1)">${ART(1)} ${NM(1)} está agindo…</span>`}`;
+  // celular deitado: a reserva e o saldo de MP vão junto do turno, na barra do topo (o placar fica atrás do 📜)
+  if(PAISAGEM()&&!J.fim){const sd=saldo(0);document.getElementById('vez').innerHTML+=` · ${mpHtml(0)} <b style="color:${sd>0?'#6ee08a':sd<0?'#ff8a80':'var(--txt)'}">${sd>=0?'+':'−'}${Math.abs(sd)}</b>`;}
   const minha=J.vez===0&&!J.ocupado&&!J.fim;
   // rodapé do mapa: você à esquerda, o Necromancer à direita, os botões do turno no meio
   const r0=renda(0),m0=manutencao(0),s0=r0-m0,c0=cerco(1),c1=cerco(0);
@@ -3010,7 +3139,10 @@ function atualiza(){
     <button onclick="fechaMenuJogo();abrirCarregar()" ${J.ocupado?'disabled':''}>📂 Carregar</button>
     <button onclick="event.stopPropagation();mudaModoCena()" title="Tela que mostra cada combate">⚔ Tela de combate: ${MODOS_CENA[modoCena()]}</button>
     ${pedidoInstalar?'<button onclick="fechaMenuJogo();instalarApp()" title="Coloca o jogo na tela inicial, em tela cheia e jogável sem internet">⤓ Instalar como app</button>':''}`;
-  document.getElementById('rodape').innerHTML=lado(0)+lado(1);
+  // celular em pé: placar em duas linhas por lado (reserva e saldo; torres, exército e cerco)
+  const ladoC=l=>{const c=l?c1:c0;return `<div class="lado${l}"><div class="quem"><span class="ponto" style="background:var(--p${l})"></span>${l?NM(1):'Você'} · ${mpHtml(l)}${l?'':` <b title="Saldo por turno: renda +${r0} (torres, castelo e fortalezas) · manutenção −${m0} (criaturas)" style="color:${s0>0?'#6ee08a':s0<0?'#ff8a80':'var(--txt)'}">${s0>=0?'+':'−'}${Math.abs(s0)}</b>`}</div>
+    <div class="vez"><span title="Torres controladas">${torresDe(l)} torres</span> · <span title="Criaturas no exército / limite">${criaturas(l)}/${limite(l)}</span> · <span title="Casas da área urbana ${l?doM(1):'sua'} ocupadas pelo adversário; com ${c.precisa} delas no início do turno de quem cerca, ele vence">cerco <b style="color:${corCerco(c)}">${c.n}/${c.precisa}</b></span></div></div>`;};
+  document.getElementById('rodape').innerHTML=RETRATO()?ladoC(0)+ladoC(1):lado(0)+lado(1);
   // Encerrar turno fica sozinho no pé da coluna da direita
   const bt=document.getElementById('btFim');
   bt.disabled=!minha;bt.classList.toggle('brilha',minha&&turnoEsgotado());
@@ -3024,7 +3156,9 @@ function atualiza(){
   else if(minha&&J.fz?.fase==='alvo')dicaAcao=`<div class="prev">⚡ Clique numa criatura inimiga (borda laranja) para a Força atacar. ${TC()} volta.</div>`;
   else if(minha&&ehMestreSel()&&J.menuMestre==='mover')dicaAcao=`<div class="prev">Clique numa casa azul para mover ${ART(0)} ${NM(0)} (${TC()} volta ao menu).</div>`;
 
-  let inf=dicaAcao;
+  // celular em pé: a dica da ação vai para uma faixa sobre o mapa, e a ficha fica só com a criatura
+  document.getElementById('dicaMapa').innerHTML=TELA_LIVRE()?dicaAcao:'';
+  let inf=TELA_LIVRE()?'':dicaAcao;
   // fora do mapa, a ficha mostra a criatura presa ou selecionada (e o terreno dela); sem nenhuma, a última casa apontada
   const fixo=J.insp||J.sel;
   const HV=J.hover||(fixo?[fixo.c,fixo.r]:J.hoverInfo);
@@ -3034,7 +3168,7 @@ function atualiza(){
   if(mostra)inf+=fichaUnidade(mostra);
   // com a previsão de ataque na tela, o terreno do alvo já entra na conta e a linha do terreno sai
   const pv=previsao();inf+=pv;
-  if(HV&&!pv){
+  if(HV&&!pv&&(!PAISAGEM()||mostra||J.hover)){ // deitado: terreno sozinho só aparece ao segurar o dedo na casa
     const k=K(...HV),t=J.ter[k];
     let d='';
     if(ehConstrucao(t))d+=` · ${J.dono[k]==null?'sem dono':J.dono[k]===0?'sua':doM(1)} · +${RENDA_TER[t]} MP/turno`;
@@ -3047,6 +3181,7 @@ function atualiza(){
     }
     inf+=`<div class="terr" title="${TER_DICA[t]}"><div class="fichaNome"><strong>${TER[t].nome} <span class="ic">ⓘ</span></strong><span class="vez">${d.replace(/^ · /,'')}</span></div>${efeito}</div>`;
   }
+  document.getElementById('info').classList.toggle('vazio',!inf); // deitado: sem nada a mostrar, a ficha some
   {const el=document.getElementById('info'),h=inf||`<span class="vez">${TOQUE()?'Toque numa criatura, ou segure o dedo numa casa, para ver os detalhes.':'Passe o mouse sobre uma criatura ou um terreno para ver os detalhes.'}</span>`;
    if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h;}} // só troca se mudou, para não perder a rolagem
   // o registro só é redesenhado quando entra mensagem nova, para não perder a rolagem
@@ -3058,11 +3193,11 @@ function atualiza(){
 // ---------- Menus flutuantes ----------
 function posMenu(el,u){
   posMenu.u=u;
-  const b=cv.getBoundingClientRect(),esc=b.width/VW;
+  const b=cv.getBoundingClientRect(),esc=b.width/TW;
   const [x,y]=paraTela(...centro(u.c,u.r)),w=el.offsetWidth,h=el.offsetHeight,rz=R*CAM.z;
   let px=(x+rz)*esc+8,py=y*esc-24;
   if(px+w>b.width-4)px=(x-rz)*esc-8-w;
-  py=Math.max(4,Math.min(py,b.height-h-4));
+  py=Math.max(PAISAGEM()?50:4,Math.min(py,b.height-h-4)); // deitado: abaixo da barra do topo
   el.style.left=px+'px';el.style.top=py+'px';
 }
 function motivoLimite(){
@@ -3150,7 +3285,7 @@ function menus(){
 
 // ---------- Entrada ----------
 function hexNoPonto(ev){
-  const b=cv.getBoundingClientRect(),[x,y]=paraMundo((ev.clientX-b.left)*VW/b.width,(ev.clientY-b.top)*VH/b.height);
+  const b=cv.getBoundingClientRect(),[x,y]=paraMundo((ev.clientX-b.left)*TW/b.width,(ev.clientY-b.top)*TH/b.height);
   let best=null,bd=Infinity;
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const [cx,cy]=centro(c,r),d=(cx-x)**2+(cy-y)**2;if(d<bd){bd=d;best=[c,r];}}
   return bd<=R*R?best:null;
@@ -3182,7 +3317,7 @@ function desenhaMini(cam){
   for(const u of J.un){const [x,y]=centro(u.c,u.r),m=ESP[u.esp].mestre;
     mctx.fillStyle=COR[u.lado];mctx.strokeStyle=m?'#f2c14e':'#000';mctx.lineWidth=(m?3:2)/s*.5;
     mctx.beginPath();mctx.arc(x,y,m?R*.5:R*.32,0,Math.PI*2);mctx.fill();mctx.stroke();}
-  const hw=VW/(2*CAM.z),hh=VH/(2*CAM.z);
+  const hw=TW/(2*CAM.z),hh=TH/(2*CAM.z);
   mctx.strokeStyle='#fff';mctx.lineWidth=1.5/s;mctx.strokeRect(CAM.x-hw,CAM.y-hh,hw*2,hh*2);
 }
 let arrastoMini=null; // id do ponteiro que está arrastando o mini mapa
@@ -3223,14 +3358,14 @@ addEventListener('pointermove',ev=>{
   if(pinca){
     if(dedos.size<2)return;
     const [a,b]=[...dedos.values()],mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
-    const q=cv.getBoundingClientRect(),k=VW/q.width;
+    const q=cv.getBoundingClientRect(),k=TW/q.width;
     // o ponto do mapa que estava entre os dedos continua entre eles: a pinça dá zoom e arrasta ao mesmo tempo
     const [wx,wy]=paraMundo((pinca.mx-q.left)*k,(pinca.my-q.top)*k);
     if(CAM.zAlvo===CAM.zPref){ // durante uma aproximação automática da câmera, a pinça só arrasta
-      const z=Math.min(ZOOM_MAX_TOQUE,Math.max(ZOOMS[0],pinca.z*Math.hypot(a.x-b.x,a.y-b.y)/pinca.d));
+      const z=Math.min(zMaxToque(),Math.max(ZOOMS[0]*zBase(),pinca.z*Math.hypot(a.x-b.x,a.y-b.y)/pinca.d));
       CAM.z=CAM.zAlvo=CAM.zPref=z;mostraZoom();
     }
-    CAM.x=wx-((mx-q.left)*k-VW/2)/CAM.z;CAM.y=wy-((my-q.top)*k-VH/2)/CAM.z;CAM.mao=true;limitaCam();
+    CAM.x=wx-((mx-q.left)*k-TW/2)/CAM.z;CAM.y=wy-((my-q.top)*k-TH/2)/CAM.z;CAM.mao=true;limitaCam();
     pinca.mx=mx;pinca.my=my;bloqueiaClique();
     return;
   }
@@ -3239,7 +3374,7 @@ addEventListener('pointermove',ev=>{
   const dx=ev.clientX-arrasto.x,dy=ev.clientY-arrasto.y;
   if(!arrasto.mov&&dx*dx+dy*dy<arrasto.lim)return;
   arrasto.mov=true;clearTimeout(tLongo);cv.style.cursor='grabbing';
-  const s=VW/cv.getBoundingClientRect().width/CAM.z;
+  const s=TW/cv.getBoundingClientRect().width/CAM.z;
   CAM.x=arrasto.cx-dx*s;CAM.y=arrasto.cy-dy*s;CAM.mao=true;limitaCam();
 });
 function soltaPonteiro(ev){
@@ -3279,8 +3414,15 @@ addEventListener('resize',()=>{if(J)menus();});
   dica.style.top=(ev.clientY-h-14>6?ev.clientY-h-14:Math.min(innerHeight-h-6,ev.clientY+18))+'px';
  });
  addEventListener('scroll',()=>{dica.style.display='none';},true);}
-// celular em pé: começa mais perto, para as casas caberem no dedo
-if(TOQUE()&&innerWidth<=520){CAM.z=CAM.zAlvo=CAM.zPref=2;mostraZoom();}
+// acerta a tela do mapa agora e sempre que o espaço dele mudar (girar o celular, barra do navegador, janela)
+ajustaTela();
+addEventListener('resize',ajustaTela);
+if(window.ResizeObserver)new ResizeObserver(()=>ajustaTela()).observe(document.getElementById('mapa'));
+// registro (celular em pé): abre por cima do jogo com o botão 📜 e fecha ao tocar fora
+// (deitado, o placar completo abre junto, porque também não fica na tela)
+function alternaLog(ev){ev.stopPropagation();const a=document.getElementById('caixaLog').classList.toggle('aberto');document.getElementById('rodape').classList.toggle('aberto',a);}
+addEventListener('click',ev=>{if(ev.target.closest&&ev.target.closest('#caixaLog,#rodape.aberto'))return;
+  document.getElementById('caixaLog').classList.remove('aberto');document.getElementById('rodape').classList.remove('aberto');});
 
 montaTabVant();
 novoJogo();
