@@ -123,6 +123,13 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .vantLinha span+span,.vantLinha i+span{margin-left:3px} /* altura reservada: o registro não pula quando a ficha muda */
 #btFim{flex:1;padding:12px;font-size:15px;font-weight:600;letter-spacing:.02em}
 #linhaFim{display:flex;gap:6px;flex:none}#btLog{display:none}
+/* atalho da Magia ao lado do Encerrar turno: só aparece quando dá para lançar; brilha quando há magia com alvo */
+#btMagia{display:none;flex:none;color:#d9b8ff;border-color:#6a4a8a;font-size:15px}
+#btMagia.ativo{display:block}
+#btMagia.brilha{animation:brilhaMagia 1.8s ease-in-out infinite}
+@keyframes brilhaMagia{0%,100%{box-shadow:0 0 0 0 #c58cff00}50%{box-shadow:0 0 12px 2px #c58cff99}}
+.paisagem #btMagia{background:#1d2029e6}
+.paisagem #btMagia .rot{display:none}
 #caixaLog{flex:1 1 0;min-height:64px;overflow:hidden;display:flex;flex-direction:column} /* o registro fica com o que sobrar e é o único que rola */
 #caixaLog #log{flex:1;max-height:none;min-height:0}
 .ficha{display:flex;flex-direction:column;gap:6px}
@@ -356,7 +363,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
   <div id="lado"><div id="ladoIn">
     <canvas id="mini" title="Mini mapa: clique ou arraste para mover a câmera"></canvas>
     <div class="cx" id="info"></div>
-    <div id="linhaFim"><button id="btLog" onclick="alternaLog(event)" aria-label="Registro">📜<span class="rot"> Registro</span></button><button class="pri" id="btFim" onclick="fimTurno()">Encerrar turno</button></div>
+    <div id="linhaFim"><button id="btLog" onclick="alternaLog(event)" aria-label="Registro">📜<span class="rot"> Registro</span></button><button id="btMagia" onclick="magiaDoBotao()" aria-label="Magia" title="Magia (atalho: M)">✦<span class="rot"> Magia</span></button><button class="pri" id="btFim" onclick="fimTurno()">Encerrar turno</button></div>
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
@@ -1630,9 +1637,17 @@ const menuAberto=()=>J.invHex!=null||(ehMestreSel()&&J.menuMestre==='principal')
 // as casas válidas acendem e o clique numa delas lança. As que pegam o mapa todo pedem confirmação.
 const alvosDaMagia=(l,id)=>{const s=new Set();for(let k=0;k<COLS*ROWS;k++)if(alvoMagia(l,id,k))s.add(k);return s;};
 const magiaDisponivel=(l,id)=>MAGIAS[id].alvo==='global'?!!alvoMagia(l,id,null):alvosDaMagia(l,id).size>0;
-function abrirMagia(){if(!podeMagia(0)||J.ocupado)return;desseleciona();J.fz=null;J.mg={fase:'lista'};J.prevArea=null;atualiza();}
+function abrirMagia(doBotao){if(!podeMagia(0)||J.ocupado)return;desseleciona();J.fz=null;J.mg={fase:'lista'};J.mgBotao=!!doBotao;J.prevArea=null;atualiza();}
+// botão ✦ ao lado do Encerrar turno: abre (ou fecha) a mesma lista do mestre, no meio da tela
+function magiaDoBotao(){
+  if(J.vez!==0||J.ocupado||J.fim||!J.invocou?.[0])return;
+  if(J.mg){J.mgBotao=true;sairMagia();return;}
+  J.insp=null;J.menuAlvo=null;J.invHex=null;J.invocando=null;J.invocHex=null;
+  abrirMagia(true);
+}
 function abrirForca(){if(!podeForca(0)||J.ocupado)return;desseleciona();J.mg=null;J.fz={fase:'alvo'};J.prevArea=null;atualiza();}
-function sairMagia(){J.mg=null;J.fz=null;J.prevArea=null;const m=mestreDe(0);if(m)seleciona(m);atualiza();}
+// aberta pelo menu do mestre, sair volta ao mestre; aberta pelo botão ✦, só fecha
+function sairMagia(){J.mg=null;J.fz=null;J.prevArea=null;const m=mestreDe(0);if(m&&!J.mgBotao)seleciona(m);J.mgBotao=false;atualiza();}
 function voltaListaMagia(){J.mg={fase:'lista'};J.prevArea=null;atualiza();}
 async function cliqueMagia(k){
   if(J.mg){
@@ -3270,6 +3285,10 @@ function atualiza(){
     <div class="vez"><span title="Torres controladas">${torresDe(l)} torres</span> · <span title="Criaturas no exército / limite">${criaturas(l)}/${limite(l)}</span> · <span title="Casas da área urbana ${l?doM(1):'sua'} ocupadas pelo adversário; com ${c.precisa} delas no início do turno de quem cerca, ele vence">cerco <b style="color:${corCerco(c)}">${c.n}/${c.precisa}</b></span></div></div>`;};
   document.getElementById('rodape').innerHTML=RETRATO()?ladoC(0)+ladoC(1):lado(0)+lado(1);
   // Encerrar turno fica sozinho no pé da coluna da direita
+  // botão ✦ Magia: depois da primeira invocação, enquanto a magia do turno não foi usada
+  {const bm=document.getElementById('btMagia'),ok=minha&&J.invocou?.[0]&&podeMagia(0);
+   bm.classList.toggle('ativo',!!ok);
+   bm.classList.toggle('brilha',!!ok&&!J.mg&&magiasDe(0).some(id=>J.mp[0]>=MAGIAS[id].custo&&magiaDisponivel(0,id)));}
   const bt=document.getElementById('btFim');
   bt.disabled=!minha;bt.classList.toggle('brilha',minha&&turnoEsgotado());
   bt.textContent=J.fim?'Fim de jogo':J.vez===0?'Encerrar turno':`Vez ${doM(1)}…`;
@@ -3325,6 +3344,9 @@ function posMenu(el,u){
   const [x,y]=paraTela(...centro(u.c,u.r)),w=el.offsetWidth,h=el.offsetHeight,rz=R*CAM.z;
   let px=(x+rz)*esc+8,py=y*esc-24;
   if(px+w>b.width-4)px=(x-rz)*esc-8-w;
+  // a criatura fora da tela (ex.: lista aberta pelo botão ✦ com o mestre longe): o menu vai para o meio
+  if(x<0||x>TW||y<0||y>TH){px=(b.width-w)/2;py=(b.height-h)/2;}
+  px=Math.max(4,Math.min(px,b.width-w-4));
   py=Math.max(PAISAGEM()?50:4,Math.min(py,b.height-h-4)); // deitado: abaixo da barra do topo
   el.style.left=px+'px';el.style.top=py+'px';
 }
@@ -3564,6 +3586,7 @@ addEventListener('keydown',ev=>{
   const P={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[ev.key];
   if(P){ev.preventDefault();CAM.x+=P[0]*50/CAM.z;CAM.y+=P[1]*50/CAM.z;CAM.mao=true;limitaCam();}
   if(ev.key==='+'||ev.key==='=')mudaZoom(1);if(ev.key==='-')mudaZoom(-1);
+  if((ev.key==='m'||ev.key==='M')&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&J)magiaDoBotao();
 });
 addEventListener('resize',()=>{if(J)menus();});
 // No toque não existe "parar o mouse em cima": tocar num item com explicação (title) mostra o texto num balão.
