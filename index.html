@@ -2442,7 +2442,7 @@ function camadaTerreno(){
   }
   muralhas(); // depois de todos os hexágonos, para nada pintar por cima das torres de canto
   ctx=real;
-  const g=cinza.getContext('2d');g.clearRect(0,0,w,h);g.filter='grayscale(1) brightness(.62)';g.drawImage(cor,0,0);g.filter='none';
+  const g=cinza.getContext('2d');g.clearRect(0,0,w,h);pintaCinza(g,cor,.62);
   return cacheTer={j:J,chave,cor,cinza,vulc};
 }
 // ---------- Muralha das fortalezas (pixel art) ----------
@@ -2781,6 +2781,15 @@ const RAMPA=[
 ];
 const atlasTime=[null,null];
 let atlasCinza=null; // versão cinza pronta (criaturas que já agiram), para não usar filtro a cada quadro
+// Versão em tons de cinza de um canvas. Feita pixel a pixel porque ctx.filter não existe no Safari (iPhone/iPad).
+function pintaCinza(g,src,brilho){
+  g.drawImage(src,0,0);
+  try{
+    const w=g.canvas.width,h=g.canvas.height,img=g.getImageData(0,0,w,h),p=img.data;
+    for(let i=0;i<p.length;i+=4){const v=(p[i]*.2126+p[i+1]*.7152+p[i+2]*.0722)*brilho;p[i]=p[i+1]=p[i+2]=v>255?255:v;}
+    g.putImageData(img,0,0);
+  }catch(e){g.clearRect(0,0,g.canvas.width,g.canvas.height);g.filter=`grayscale(1) brightness(${brilho})`;g.drawImage(src,0,0);g.filter='none';}
+}
 function tingir(img,rampa){
   const cv2=document.createElement('canvas');cv2.width=img.width;cv2.height=img.height;
   const x2=cv2.getContext('2d');x2.drawImage(img,0,0);
@@ -2855,7 +2864,7 @@ atlas.onload=()=>{
   for(const l of [0,1]){
     atlasTime[l]=tingir(atlas,RAMPA[l]);
     if(l===0){atlasCinza=document.createElement('canvas');atlasCinza.width=atlas.width;atlasCinza.height=atlas.height;
-      const g=atlasCinza.getContext('2d');g.filter='grayscale(1) brightness(.85)';g.drawImage(atlasTime[0],0,0);}
+      const g=atlasCinza.getContext('2d');pintaCinza(g,atlasTime[0],.85);}
     document.documentElement.style.setProperty('--atlas'+l,`url(${atlasTime[l].toDataURL()})`);
   }
   // todas as criaturas ganham contorno escuro, para se destacarem de qualquer terreno
@@ -3214,10 +3223,11 @@ function atualiza(){
   const hu=HV&&unidadeEm(...HV);
   if(J.insp&&!J.un.includes(J.insp))J.insp=null;
   const mostra=hu||J.insp||J.sel;
-  if(mostra)inf+=fichaUnidade(mostra);
+  // celular deitado: sem ficha da criatura nem do terreno (tapam o mapa); só a previsão de ataque aparece
+  if(mostra&&!PAISAGEM())inf+=fichaUnidade(mostra);
   // com a previsão de ataque na tela, o terreno do alvo já entra na conta e a linha do terreno sai
   const pv=previsao();inf+=pv;
-  if(HV&&!pv&&(!PAISAGEM()||mostra||J.hover)){ // deitado: terreno sozinho só aparece ao segurar o dedo na casa
+  if(HV&&!pv&&!PAISAGEM()){
     const k=K(...HV),t=J.ter[k];
     let d='';
     if(ehConstrucao(t))d+=` · ${J.dono[k]==null?'sem dono':J.dono[k]===0?'sua':doM(1)} · +${RENDA_TER[t]} MP/turno`;
