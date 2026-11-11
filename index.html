@@ -42,6 +42,8 @@ body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,"Seg
 #saves .mestres button{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;padding:6px}
 #saves .mestres .spr{margin:0 0 2px;border-radius:6px;background-color:#14161c}
 #saves .mestres .desc{font-size:11px;opacity:.85}
+#saves .mestres .txt{display:flex;flex-direction:column;align-items:center;gap:2px}
+#saves .tituloJogo{display:none}
 button.brilha{animation:brilha 1.6s ease-in-out infinite}
 @keyframes brilha{0%,100%{box-shadow:0 0 0 #f2c14e00}50%{box-shadow:0 0 10px 2px #f2c14eaa}}
 #passar .linha{justify-content:center;margin-top:8px}
@@ -235,7 +237,7 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 html.paisagem,.paisagem body{height:100%;overflow:hidden;overscroll-behavior:none}
 .paisagem #app{display:block;padding:0;max-width:none}
 .paisagem #colMapa,.paisagem #lado,.paisagem #ladoIn{display:contents}
-.paisagem #mapa{position:fixed;inset:0}
+.paisagem #mapa{position:absolute;inset:0} /* absolute (e não fixed) para a tela inicial conseguir cobrir os botões do topo */
 .paisagem #cv{position:absolute;inset:0;width:100%;height:100%;border-radius:0}
 .paisagem #mini{display:none}
 .paisagem #cena{width:auto;height:92%}
@@ -272,6 +274,46 @@ html.paisagem,.paisagem body{height:100%;overflow:hidden;overscroll-behavior:non
 .paisagem #rodape.aberto{display:grid;position:fixed;right:6px;top:52px;width:min(380px,60vw);z-index:8;border-color:#4a5268;box-shadow:0 6px 30px #000d}
 .paisagem #caixaLog.aberto{display:flex;position:fixed;right:6px;top:168px;bottom:56px;width:min(380px,60vw);z-index:8;border-color:#4a5268;box-shadow:0 6px 30px #000d}
 .paisagem #caixaLog.aberto #log{overflow:auto}
+
+/* ---------- Tela inicial (PC e celular): tela cheia, sem rolagem, sem o jogo aparecendo atrás ---------- */
+#saves.tela{display:flex!important;flex-direction:column;justify-content:center;position:fixed;inset:0;transform:none;
+  width:auto;min-width:0;max-width:none;max-height:none;margin:0;border:none;border-radius:0;box-shadow:none;z-index:20;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 0%,#2a2f52 0%,var(--bg) 70%);
+  padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+#saves.tela>*{flex:none;width:100%;max-width:560px;align-self:center}
+#saves.tela .tituloJogo{display:block;font-size:24px;font-weight:700;letter-spacing:.03em;color:var(--acc);text-shadow:0 2px 10px #000a}
+#saves.cfg .subt{display:none}
+#saves.cfg .mestres{flex:0 1 auto;min-height:0;width:100%;max-width:920px;display:grid;gap:6px;margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));grid-auto-rows:1fr}
+#saves.cfg .mestres button{min-height:0;overflow:hidden;background:#1d2029cc}
+#saves.cfg .mestres button.pri{background:#2f5d8f}
+#saves.cfg>.linha{position:static;margin:14px 0 0;padding:0;background:none}
+#saves.cfg>*{max-width:920px}
+@media (min-width:901px){#saves.tela .tituloJogo{font-size:36px;margin-bottom:4px}#saves.cfg .mestres{margin-top:16px;gap:10px}#saves.cfg .mestres b{font-size:16px}#saves.cfg .mestres .desc{font-size:12px}}
+#saves.cfg .mestres button{padding:12px 8px}
+#saves.cfg>.linha button{min-height:46px;padding:10px 22px;font-size:15px}
+/* em pé: um mestre por linha, desenho à esquerda e texto à direita */
+.retrato #saves.cfg .mestres{flex:0 1 560px;grid-template-columns:1fr;max-width:560px}
+.retrato #saves.cfg .mestres button{flex-direction:row;align-items:center;gap:12px;padding:6px 12px;text-align:left}
+.retrato #saves.cfg .mestres .spr{margin:0}
+.retrato #saves.cfg .mestres .txt{align-items:flex-start;flex:1;min-width:0}
+.retrato #saves.cfg .mestres b{font-size:15px}
+/* deitado: os cinco lado a lado; título e instrução na mesma linha para sobrar altura */
+.paisagem #saves.cfg{justify-content:flex-start}
+.paisagem #saves.cfg .mestres{flex:1 1 0;grid-template-columns:repeat(5,1fr);max-width:none}
+.paisagem #saves.tela>*{max-width:none}
+.paisagem #saves.tela .tituloJogo{font-size:19px}
+
+/* ---------- Menu de invocação: grade de cartões, sem rolagem. No PC abre ao lado da construção; no toque, no meio do mapa ---------- */
+#menuM.grade{width:350px}
+.toque #menuM.grade{left:50%!important;top:50%!important;transform:translate(-50%,-50%);width:min(350px,96%)!important;max-height:none;overflow:visible}
+#menuM .invG{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 2px}
+#menuM .invG button{position:relative;margin:0;min-height:0;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 4px 6px;text-align:center}
+#menuM .invG .spr{margin:0 0 2px}
+#menuM .invG .nm{font-weight:600;font-size:13px;line-height:1.2}
+#menuM .invG small{font-size:11.5px}
+#menuM .invG .custo{position:absolute;right:6px;top:4px;font-size:12px;color:var(--acc)}
+.paisagem #menuM.grade{width:min(640px,96%)!important}
+.paisagem #menuM .invG{grid-template-columns:repeat(6,1fr)}
 </style>
 </head>
 <body>
@@ -404,6 +446,10 @@ async function focar(c,r){
 // ponto fixo do zoom: criatura ou construção selecionada > casa sob o mouse > centro da tela
 const ZOOM_MAX_TOQUE=2.6; // a pinça passa um pouco do último degrau: no celular as casas precisam caber no dedo
 const zMaxToque=()=>TELA_LIVRE()?zBase()*2:ZOOM_MAX_TOQUE;
+// celular: a partida abre perto do mestre, com casas de ~58 px na tela. Assim o jogador é apresentado à sua área
+// inicial e as casas de invocação ficam fáceis de tocar; para ver mais do mapa, é só afastar com a pinça.
+const zInicio=()=>Math.min(zBase()*2,Math.max(zBase(),58*TW/(W*LARG_CSS)));
+function zoomInicio(){if(!TELA_LIVRE())return;CAM.z=CAM.zAlvo=CAM.zPref=zInicio();mostraZoom();}
 function mostraZoom(){document.getElementById('zoomN').textContent=Math.round(CAM.zPref/zBase()*100)+'%';}
 // Mede o espaço do mapa e acerta a tela (TW×TH) e o canvas. Também liga/desliga o modo "retrato" (celular em pé),
 // em que o mapa preenche a área que sobra da tela em vez de ter proporção fixa. Chamado ao iniciar e a cada mudança de tamanho.
@@ -431,8 +477,8 @@ function ajustaTela(){
   const k=zBase()/antes;
   if(k!==1){CAM.z*=k;CAM.zAlvo*=k;CAM.zPref*=k;}
   if(mudouModo){
-    // ao entrar num modo de celular começa com o mapa cobrindo a tela; ao sair, volta para um degrau do PC
-    const z=ret||pai?zBase():ZOOMS.reduce((a,v)=>Math.abs(v-CAM.zPref)<Math.abs(a-CAM.zPref)?v:a);
+    // ao entrar num modo de celular usa o zoom inicial do celular; ao sair, volta para um degrau do PC
+    const z=ret||pai?zInicio():ZOOMS.reduce((a,v)=>Math.abs(v-CAM.zPref)<Math.abs(a-CAM.zPref)?v:a);
     CAM.z=CAM.zAlvo=CAM.zPref=z;
   }
   limitaCam();mostraZoom();if(J)atualiza();
@@ -822,6 +868,7 @@ function novoJogo(op=prefs()){
      ...estadoMagiaNovo([op.ordem,ordemIA],0)}; // mana só pela renda (padrão do jogo)
   criaUnidade(ORDENS[op.ordem].esp,0,...m.f0);
   criaUnidade(ORDENS[ordemIA].esp,1,...m.f1);
+  zoomInicio();
   {const [x,y]=centro(...m.f0);CAM.x=x;CAM.y=y;CAM.alvo=null;limitaCam();}
   log(`Mapa: ${m.tema}. Capture as torres e derrote ${ART(1)} ${NM(1)}.`);
   log(`Seu mestre: ${NM(0)}. Mestre inimigo: ${NM(1)}.`);
@@ -854,13 +901,14 @@ function carregar(slot){
   if(s.magiaUsada)J.magiaUsada=s.magiaUsada;if(s.forcaUsada)J.forcaUsada=s.forcaUsada;if(s.elem)J.elem=s.elem;
   J.ciclo=s.ciclo??(s.turno-1)%CICLO.length;J.cicloDir=s.cicloDir||1;
   nid=Math.max(s.nid,...J.un.map(u=>u.id+1));
+  zoomInicio();
   const m=mestreDe(0);if(m){const [x,y]=centro(m.c,m.r);CAM.x=x;CAM.y=y;CAM.alvo=null;limitaCam();}
   log(`Jogo carregado (turno ${J.turno}).`);
   fecharSaves();atualiza();return true;
 }
 const descSave=s=>`Turno ${s.turno} · ${s.tema} · ${new Date(s.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`;
 function salvarJogo(){
-  const el=document.getElementById('saves');
+  const el=document.getElementById('saves');el.classList.remove('cfg','tela');
   const ok=gravar('manual');
   el.innerHTML=`<div><strong>${ok?'Jogo salvo.':'Não foi possível salvar agora.'}</strong></div>
     <div class="vez">${ok?descSave(lerSave('manual')):'Só dá para salvar no seu turno, sem ação em andamento.'}</div>
@@ -895,7 +943,7 @@ async function lerArquivoSave(f,daConfig=false){
 }
 function abrirCarregar(daConfig=false,aviso=''){
   const el=document.getElementById('saves'),man=lerSave('manual'),aut=lerSave('auto');
-  el.classList.remove('cfg');
+  el.classList.remove('cfg');el.classList.toggle('tela',!!daConfig); // vindo da tela inicial, continua em tela cheia
   let h=`<div><strong>Carregar jogo</strong></div>${daConfig?'':'<div class="vez">O jogo atual será substituído.</div>'}<div class="col">`;
   h+=man?`<button onclick="carregar('manual')"><b>Salvo</b><small>${descSave(man)}</small></button>`:'<div class="vez">Nenhum jogo salvo manualmente.</div>';
   if(aut)h+=`<button onclick="carregar('auto')"><b>Automático</b><small>${descSave(aut)}</small></button>`;
@@ -904,7 +952,7 @@ function abrirCarregar(daConfig=false,aviso=''){
     <div class="vez" style="margin-top:6px">Os jogos ficam salvos neste navegador. Exporte para guardar uma cópia ou continuar em outro aparelho.</div><div class="linha"><button onclick="${daConfig?'desenhaConfig()':'fecharSaves()'}">${daConfig?'Voltar':'Cancelar'}</button></div>`;
   el.innerHTML=h;el.style.display='block';
 }
-function fecharSaves(){const el=document.getElementById('saves');el.style.display='none';el.classList.remove('cfg');}
+function fecharSaves(){const el=document.getElementById('saves');el.style.display='none';el.classList.remove('cfg','tela');}
 // tela de novo jogo: escolha do mestre (cada um com sua miniatura, força e magias exclusivas)
 let cfgSel=null,cfgInicio=false;
 function abreConfig(inicio=false){
@@ -913,12 +961,13 @@ function abreConfig(inicio=false){
 }
 function desenhaConfig(){
   const el=document.getElementById('saves');
-  let h=`<div><strong>Novo jogo</strong></div><div class="vez">Escolha seu mestre. O inimigo recebe outro, sorteado.</div><div class="mestres">`;
+  // tela cheia (classe "tela"), com o nome do jogo no alto
+  let h=`<div class="tituloJogo">Senhores do Véu</div><div class="subt"><strong>Novo jogo</strong></div><div class="vez">Escolha seu mestre. O inimigo recebe outro, sorteado.</div><div class="mestres">`;
   for(const [id,o] of Object.entries(ORDENS))
-    h+=`<button class="${id===cfgSel.ordem?'pri':''}" onclick="cfgSel.ordem='${id}';desenhaConfig()">${iconeSpr(o.esp,84,'cor')}<b>${o.nome}</b><small>${o.magias.map(m=>`${MAGIAS[m].nome} (${MAGIAS[m].custo})`).join(' · ')}</small><small>Força: ${o.forca.map(e=>`<span style="color:${EL[e]}">${ELN[e]}</span>`).join(', ')}</small><small class="desc">${o.desc}</small></button>`;
+    h+=`<button class="${id===cfgSel.ordem?'pri':''}" onclick="cfgSel.ordem='${id}';desenhaConfig()">${iconeSpr(o.esp,TOQUE()?64:84,'cor')}<span class="txt"><b>${o.nome}</b><small>Força: ${o.forca.map(e=>`<span style="color:${EL[e]}">${ELN[e]}</span>`).join(', ')}</small><small class="desc">${o.desc}</small></span></button>`;
   h+=`</div>
     <div class="linha"><button class="pri" onclick="comecarJogo()">Começar</button>${lerSave('manual')||lerSave('auto')?'<button onclick="abrirCarregar(true)">📂 Carregar jogo salvo</button>':''}${cfgInicio?'':'<button onclick="fecharSaves()">Cancelar</button>'}</div>`;
-  el.innerHTML=h;el.classList.add('cfg');el.style.display='block';
+  el.innerHTML=h;el.classList.add('cfg','tela');el.style.display='block';
 }
 function comecarJogo(){gravaPrefs(cfgSel);fecharSaves();novoJogo(cfgSel);}
 // para onde cada desenho do atlas olha (1 = direita, -1 = esquerda; os de frente contam como direita)
@@ -3214,7 +3263,7 @@ function menus(){
   const mm=document.getElementById('menuM'),ps=document.getElementById('passar');
   const minha=J.vez===0&&!J.ocupado&&!J.fim;
   const m=mestreDe(0);
-  mm.style.width='';
+  mm.style.width='';mm.classList.remove('grade');
   if(minha&&m&&J.mg?.fase==='lista'){
     // só aparecem as magias que têm algum alvo possível agora
     const todas=magiasDe(0),lista=todas.filter(id=>magiaDisponivel(0,id));
@@ -3256,13 +3305,14 @@ function menus(){
     mm.innerHTML=h;mm.style.display='block';posMenu(mm,m);
   }else if(minha&&J.invHex!=null){
     const [hc,hr]=DK(J.invHex);
-    let h=`<div class="tit" style="color:var(--p0)">Invocar · ${TER[J.ter[J.invHex]].nome}</div>
-      <div class="vez">${mpHtml(0)} · saldo ${saldo(0)>=0?'+':''}${saldo(0)}/turno · exército ${criaturas(0)}/${limite(0)}</div><div class="inv">`;
+    // grade de cartões (desenho, nome, elemento e custo), sem rolagem; os números da criatura ficam na ficha, depois de invocar
+    let h=`<div class="tit" style="color:var(--p0)">Invocar</div><div class="vez">${mpHtml(0)} · saldo ${saldo(0)>=0?'+':''}${saldo(0)}/turno · exército ${criaturas(0)}/${limite(0)}</div><div class="invG">`;
     for(const s of INVOCAVEIS){
       const e=ESP[s],ok=J.mp[0]>=e.custo&&podeTerMais(0);
-      h+=`<button onclick="escolherInvocacao('${s}')" ${ok?'':'disabled'}><span><span>${iconeSpr(s,28,'cor')}${e.nome}</span><strong>${e.custo}</strong></span><small><span style="color:${EL[e.el]}">●</span> ${ELN[e.el]} · Vida ${e.hp} · Atq ${e.atk} · Def ${e.def} · Mov ${e.mov} · manut. ${manutEsp(s)}/turno · ${CAT_DEF[e.cat].nome} · ${HORA_EL[e.el]==='dia'?'☀':HORA_EL[e.el]==='noite'?'☾':'—'}</small></button>`;
+      h+=`<button onclick="escolherInvocacao('${s}')" ${ok?'':'disabled'}><b class="custo">${e.custo}</b>${iconeSpr(s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${EL[e.el]}">${ELN[e.el]}</small></button>`;
     }
     h+=`</div>${podeTerMais(0)?'':`<div class="vez">${motivoLimite()}</div>`}<button onclick="J.invHex=null;atualiza()">✕ Fechar</button>`;
+    mm.classList.add('grade');
     mm.innerHTML=h;mm.style.display='block';posMenu(mm,{c:hc,r:hr});
   }else mm.style.display='none';
 
