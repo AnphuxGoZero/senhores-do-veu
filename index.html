@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#14161c">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icones/icone-192.png">
@@ -246,6 +246,8 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 /* O mapa ocupa a tela inteira; por cima dele fica só o necessário: turno e MP, relógio, centralizar,
    Cancelar, Registro e Encerrar turno. A ficha aparece apenas quando há criatura selecionada ou apontada. */
 html.paisagem,.paisagem body{height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg)}
+/* celular: sem zoom da página (pinça ou toque duplo). Com a página ampliada, o que se vê e onde o toque cai se desencontram */
+html.retrato,html.paisagem{touch-action:pan-x pan-y}
 /* fixed + inset:0 acompanha a área realmente visível no Safari (a barra do navegador encolhe e cresce);
    com altura de 100% a página ficava maior que a tela: a cena de combate cortava embaixo e os toques nos botões de baixo se perdiam */
 .paisagem #app{display:block;position:fixed;inset:0;padding:0;max-width:none}
@@ -288,6 +290,15 @@ html.paisagem,.paisagem body{height:100%;overflow:hidden;overscroll-behavior:non
 .paisagem #rodape.aberto{display:grid;position:fixed;right:6px;top:52px;width:min(380px,60vw);z-index:8;border-color:#4a5268;box-shadow:0 6px 30px #000d}
 .paisagem #caixaLog.aberto{display:flex;position:fixed;right:6px;top:168px;bottom:56px;width:min(380px,60vw);z-index:8;border-color:#4a5268;box-shadow:0 6px 30px #000d}
 .paisagem #caixaLog.aberto #log{overflow:auto}
+/* iPhone: o jogo ocupa a tela inteira (viewport-fit=cover). Sem isso o app instalado deixava uma faixa preta do lado
+   do entalhe e, depois de girar, o toque caía deslocado. Os controles ficam afastados do entalhe e da barrinha de baixo. */
+:root{--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
+.paisagem #topoMapa{left:calc(6px + var(--sl));right:calc(6px + var(--sr));top:calc(6px + var(--st))}
+.paisagem #linhaFim{right:calc(8px + var(--sr));bottom:calc(12px + var(--sb))}
+.paisagem #btCancela{left:calc(8px + var(--sl));bottom:calc(12px + var(--sb))}
+.paisagem #info{left:calc(128px + var(--sl));right:calc(214px + var(--sr));bottom:calc(12px + var(--sb))}
+.paisagem #rodape.aberto,.paisagem #caixaLog.aberto{right:calc(6px + var(--sr))}
+.retrato #app{padding:4px calc(4px + var(--sr)) calc(4px + var(--sb)) calc(4px + var(--sl))}
 
 /* ---------- Tela inicial (PC e celular): tela cheia, sem rolagem, sem o jogo aparecendo atrás ---------- */
 #saves.tela{display:flex!important;flex-direction:column;justify-content:center;position:fixed;inset:0;transform:none;
@@ -3484,7 +3495,9 @@ let arrasto=null,pinca=null,tLongo=0;
 cv.addEventListener('pointerdown',ev=>{
   const rato=ev.pointerType==='mouse';
   if(rato&&ev.button!==0)return;
-  if(rato)dedos.clear(); // o mouse é um ponteiro só; limpa o que tiver sobrado de um botão solto fora da janela
+  // o mouse é um ponteiro só; e o primeiro dedo de um toque novo também começa do zero. Se um dedo anterior
+  // não mandou "soltou" (gesto do sistema, barra do Safari), ele ficaria preso e o próximo toque viraria pinça.
+  if(rato||ev.isPrimary){dedos.clear();pinca=null;}
   dedos.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
   clearTimeout(tLongo);
   if(dedos.size===1){
@@ -3569,6 +3582,13 @@ addEventListener('resize',()=>{if(J)menus();});
 // acerta a tela do mapa agora e sempre que o espaço dele mudar (girar o celular, barra do navegador, janela)
 ajustaTela();
 addEventListener('resize',ajustaTela);
+// Safari no celular: quando a barra do navegador encolhe ou cresce, a página pode ficar "rolada" alguns pixels mesmo
+// sem rolagem. Aí o desenho e a área de toque se desencontram (toca-se numa casa e vale a vizinha; botões não respondem).
+// Volta a página ao topo sempre que a área visível muda.
+{const reTopo=()=>{if((RETRATO()||PAISAGEM())&&(scrollX||scrollY||document.documentElement.scrollTop||document.body.scrollTop)){
+   scrollTo(0,0);document.documentElement.scrollTop=document.body.scrollTop=0;}};
+ if(window.visualViewport){visualViewport.addEventListener('resize',()=>{reTopo();ajustaTela();});visualViewport.addEventListener('scroll',reTopo);}
+ addEventListener('scroll',reTopo);addEventListener('orientationchange',()=>setTimeout(()=>{reTopo();ajustaTela();},300));}
 if(window.ResizeObserver)new ResizeObserver(()=>ajustaTela()).observe(document.getElementById('mapa'));
 // registro (celular em pé): abre por cima do jogo com o botão 📜 e fecha ao tocar fora
 // (deitado, o placar completo abre junto, porque também não fica na tela)
