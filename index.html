@@ -3561,6 +3561,10 @@ mini.addEventListener('wheel',ev=>{ev.preventDefault();mudaZoom(ev.deltaY<0?1:-1
 // segurar o dedo parado numa casa mostra os detalhes dela (o que o mouse faz só de passar por cima).
 const dedos=new Map(); // ponteiros encostados no mapa: id → posição atual
 let arrasto=null,pinca=null,tLongo=0;
+// zoom com um dedo (toque + toque arrastado): tocar, e logo em seguida tocar de novo no mesmo lugar e arrastar;
+// para baixo aproxima, para cima afasta. Se o segundo toque não arrastar, ele vale como um toque comum.
+let ultToque={t:0,x:0,y:0};
+const TOQUE_DUPLO_MS=320,TOQUE_DUPLO_PX=40;
 cv.addEventListener('pointerdown',ev=>{
   const rato=ev.pointerType==='mouse';
   if(rato&&ev.button!==0)return;
@@ -3571,7 +3575,10 @@ cv.addEventListener('pointerdown',ev=>{
   clearTimeout(tLongo);
   if(dedos.size===1){
     arrasto={id:ev.pointerId,x:ev.clientX,y:ev.clientY,cx:CAM.x,cy:CAM.y,mov:false,longo:false,lim:rato?36:144};
-    if(!rato){
+    const duplo=!rato&&performance.now()-ultToque.t<TOQUE_DUPLO_MS&&Math.hypot(ev.clientX-ultToque.x,ev.clientY-ultToque.y)<TOQUE_DUPLO_PX;
+    ultToque.t=0; // um terceiro toque não emenda outro gesto
+    if(duplo){arrasto.zd={z:CAM.z};arrasto.lim=64;}
+    else if(!rato){
       if(J.hover){J.hover=null;atualiza();} // a casa "apontada" pelo toque longo anterior é solta
       tLongo=setTimeout(()=>{
         if(!arrasto||arrasto.mov||dedos.size!==1)return;
@@ -3607,7 +3614,18 @@ addEventListener('pointermove',ev=>{
   if(ev.pointerType==='mouse'&&!(ev.buttons&1))return;
   const dx=ev.clientX-arrasto.x,dy=ev.clientY-arrasto.y;
   if(!arrasto.mov&&dx*dx+dy*dy<arrasto.lim)return;
-  arrasto.mov=true;clearTimeout(tLongo);cv.style.cursor='grabbing';
+  arrasto.mov=true;clearTimeout(tLongo);
+  if(arrasto.zd){ // toque + toque arrastado: muda o zoom mantendo parado o ponto onde o dedo encostou
+    const q=cv.getBoundingClientRect(),k=TW/q.width,px=(arrasto.x-q.left)*k,py=(arrasto.y-q.top)*k;
+    const [wx,wy]=paraMundo(px,py);
+    if(CAM.zAlvo===CAM.zPref){
+      const z=Math.min(zMaxToque(),Math.max(ZOOMS[0]*zBase(),arrasto.zd.z*Math.pow(2,dy/160))); // 160 px de arrasto dobram o zoom
+      CAM.z=CAM.zAlvo=CAM.zPref=z;mostraZoom();
+    }
+    CAM.x=wx-(px-TW/2)/CAM.z;CAM.y=wy-(py-TH/2)/CAM.z;CAM.mao=true;limitaCam();
+    return;
+  }
+  cv.style.cursor='grabbing';
   const s=TW/cv.getBoundingClientRect().width/CAM.z;
   CAM.x=arrasto.cx-dx*s;CAM.y=arrasto.cy-dy*s;CAM.mao=true;limitaCam();
 });
@@ -3621,7 +3639,11 @@ function soltaPonteiro(ev){
     if(dedos.size===1){const [id,p]=[...dedos][0];arrasto={id,x:p.x,y:p.y,cx:CAM.x,cy:CAM.y,mov:true,longo:false,lim:0};}
     return;
   }
-  if(arrasto&&arrasto.id===ev.pointerId){if(arrasto.mov||arrasto.longo)bloqueiaClique();arrasto=null;cv.style.cursor='';}
+  if(arrasto&&arrasto.id===ev.pointerId){
+    if(arrasto.mov||arrasto.longo)bloqueiaClique();
+    // toque simples (não arrastou, não segurou): guarda para reconhecer o toque + toque arrastado
+    else if(ev.pointerType!=='mouse'&&!arrasto.zd)ultToque={t:performance.now(),x:ev.clientX,y:ev.clientY};
+    arrasto=null;cv.style.cursor='';}
 }
 addEventListener('pointerup',soltaPonteiro);addEventListener('pointercancel',soltaPonteiro);
 cv.addEventListener('wheel',ev=>{ev.preventDefault();mudaZoom(ev.deltaY<0?1:-1);},{passive:false});
