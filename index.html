@@ -39,6 +39,17 @@ body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,"Seg
 #menuM .acao .ic{font-size:22px;line-height:1.1}
 #menuM .acao b{font-size:14px}
 #menuM .acao small{font-size:11px;color:#aab3c5;line-height:1.2}
+/* caixa de magias: moldura roxa e cartões em grade */
+#menuM.magias{border-color:#6a4a8a;box-shadow:0 6px 24px #000a,0 0 0 1px #6a4a8a55}
+#menuM .mgGrade{max-height:min(340px,55vh);max-height:min(340px,55dvh);overflow:auto}
+#menuM .mgCarta{position:relative;background:#262238;border-color:#4a3d6a;min-height:78px}
+#menuM .mgCarta:hover:not(:disabled){background:#30294a}
+#menuM .mgCarta b{font-size:13px;line-height:1.2}
+#menuM .mgCarta.exclusiva{border-color:#c9a24a}
+#menuM .mgCarta .estrela{position:absolute;top:3px;right:6px;color:#f2c14e;font-size:11px}
+#menuM .mpCusto{margin-top:3px;font-size:11px;padding:1px 7px;border-radius:9px;background:#3a2f52;color:#d6c2ff}
+#menuM .mpCusto.falta{background:#3a2a2a;color:#ff8a80}
+#menuM .mgCarta:disabled{opacity:.55}
 #menuM .acao:disabled .ic{filter:grayscale(1);opacity:.5}
 #menuM .inv button{flex-direction:column;align-items:flex-start;gap:0}
 #menuM .inv button>span{display:flex;justify-content:space-between;width:100%}
@@ -256,6 +267,18 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #fichaDet>.cx{width:min(420px,100%);max-height:85vh;max-height:85dvh;overflow:auto;font-size:12.5px;box-shadow:0 10px 40px #000c}
 #fichaDet .topoAj{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 #fichaDet .topoAj h2{margin:0}
+/* linha do terreno: tocar/clicar abre a explicação */
+.terr{cursor:pointer;border-radius:5px}
+.terr:hover{background:#252935}
+.terr .ic,.fichaNome .ic{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#2f5d8f;color:#fff;font-size:11px;vertical-align:1px}
+.terTopo{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.terHex{width:34px;height:38px;flex:none;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.terDesc{margin:0 0 8px;font-size:13px}
+.terTab{width:100%;border-collapse:collapse;font-size:12px}
+.terTab th{text-align:left;font-weight:500;color:var(--dim);border-bottom:1px solid var(--line);padding:3px 4px}
+.terTab td{padding:3px 4px;border-bottom:1px solid #252935}
+.terTab th+th,.terTab td+td{text-align:right}
+.terTab tr.eu td{background:#3a3020;font-weight:600}
 #fichaDet .topoAj button{min-height:0;padding:4px 10px}
 .retrato #info>.prev{order:-1;margin:0!important;padding:4px 8px;font-size:12px} /* dica da ação e previsão do ataque sempre no topo */
 .retrato #info .terr{margin-top:0;padding-top:5px}
@@ -387,7 +410,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
-<div id="fichaDet" onclick="if(event.target===this)fechaFicha()"><div class="cx"><div class="topoAj"><h2>Detalhes</h2><button onclick="fechaFicha()" title="Fechar (Esc)">✕</button></div><div id="fichaDetIn"></div></div></div>
+<div id="fichaDet" onclick="if(event.target===this)fechaFicha()"><div class="cx"><div class="topoAj"><h2 id="fichaDetTit">Detalhes</h2><button onclick="fechaFicha()" title="Fechar (Esc)">✕</button></div><div id="fichaDetIn"></div></div></div>
 <div id="ajuda" onclick="if(event.target===this)fechaAjuda()"><div class="cx ajuda"><div class="topoAj"><h1>Como jogar</h1><button onclick="fechaAjuda()" title="Fechar (Esc)">✕</button></div>
       <p><b>Acerto:</b> cada ataque são 3 golpes. A chance de cada golpe acertar é a precisão de quem ataca menos a evasão do terreno de quem defende, mais ou menos 25% pelo horário (mínimo 5%, máximo 95%). Passe o mouse no alvo para ver a conta.</p>
       <p><b>Dia e noite:</b> o tempo avança em ciclo: Manhã (1 rodada) → Dia (2) → Entardecer (1) → Noite (2). <span style="color:#f2d36b">☀ Fogo e Planta</span> ganham precisão de dia; <span style="color:#9fb4ff">☾ Água e Arcano</span>, à noite. No horário oposto, perdem. O efeito é de 10% na Manhã e no Entardecer e de 25% no Dia e na Noite. Terra, Ar e os mestres não mudam.</p>
@@ -828,9 +851,9 @@ const voa=esp=>!!catDe(esp).voo;
 function custoMov(esp,t){return catDe(esp).custo[IDX_TER[t]];}
 function defTer(esp,t){return catDe(esp).def[IDX_TER[t]];}
 // gelo: especialistas glaciais lutam melhor; as demais tropas de solo, 10% pior; voadores não são afetados
-function atkTer(esp,t){
+function atkTer(esp,t){return atkCat(catDe(esp),t);}
+function atkCat(c,t){
   if(t!=='gelo')return 1;
-  const c=catDe(esp);
   if(c.atkGelo)return c.atkGelo;
   return c.voo?1:0.9;
 }
@@ -3247,12 +3270,34 @@ function terrenoHtml(hv,ref){
     const cm=custoMov(ref.esp,t),df=defTer(ref.esp,t),at=atkTer(ref.esp,t);
     efeito=`<div class="vez" title="Efeito do terreno para ${ESP[ref.esp].nome}">${isFinite(cm)?`Movimento <b style="color:var(--txt)">${cm}</b>`:'<b style="color:#ff8a80">Não pode entrar</b>'} · Evasão <b style="color:${df<0?'#ff8a80':'var(--txt)'}">${Math.round(df*100)}%</b>${at!==1?` · Ataque <b style="color:${at>1?'#6ee08a':'#ff8a80'}">${at>1?'+':'−'}${Math.round(Math.abs(at-1)*100)}%</b>`:''}</div>`;
   }
-  return `<div class="terr" title="${TER_DICA[t]}"><div class="fichaNome"><strong>${TER[t].nome} <span class="ic">ⓘ</span></strong><span class="vez">${d.replace(/^ · /,'')}</span></div>${efeito}</div>`;
+  return `<div class="terr" role="button" tabindex="0" onclick="abreTerreno(${k},${ref&&ref.id!=null?ref.id:-1})" aria-label="Ver explicação: ${TER[t].nome}"><div class="fichaNome"><strong>${TER[t].nome} <span class="ic">ⓘ</span></strong><span class="vez">${d.replace(/^ · /,'')}</span></div>${efeito}</div>`;
 }
 // ficha completa (celular em pé): abre ao tocar no retrato da criatura; embaixo, o terreno onde ela está
 let fichaAberta=null;
+function abreDet(titulo,html){fichaAberta=fichaAberta??true;document.getElementById('fichaDetTit').textContent=titulo;
+  const d=document.getElementById('fichaDet');document.getElementById('fichaDetIn').innerHTML=html;d.classList.add('aberto');d.querySelector('.cx').scrollTop=0;}
 function abreFicha(id){const u=J&&J.un.find(x=>x.id===id);if(!u)return;fichaAberta=id;
-  document.getElementById('fichaDetIn').innerHTML=fichaUnidade(u,true)+terrenoHtml([u.c,u.r],u);document.getElementById('fichaDet').classList.add('aberto');}
+  abreDet('Detalhes',fichaUnidade(u,true)+terrenoHtml([u.c,u.r],u));}
+// explicação de um terreno: o que ele faz e, para cada tipo de criatura, movimento, evasão (e ataque, no gelo)
+function abreTerreno(k,refId){
+  if(!J)return;
+  const t=J.ter[k],i=IDX_TER[t],ref=J.un.find(x=>x.id===refId),catRef=ref&&ESP[ref.esp].cat;
+  const pct=v=>`${v>0?'':v<0?'−':''}${Math.round(Math.abs(v)*100)}%`;
+  const gelo=t==='gelo';
+  const linhas=Object.entries(CAT_DEF).filter(([id])=>id!=='elemental').map(([id,c])=>{
+    const cm=c.custo[i],df=c.def[i],at=atkCat(c,t),entra=isFinite(cm);
+    const corEv=df<0?'#ff8a80':df>=.5?'#6ee08a':'var(--txt)';
+    return `<tr class="${id===catRef?'eu':''}"${id===catRef?` title="Categoria ${ref?'de '+ESP[ref.esp].nome:''}"`:''}><td>${c.nome}</td>
+      <td>${entra?cm:'<span style="color:#ff8a80">não entra</span>'}</td>
+      <td style="color:${entra?corEv:'var(--dim)'}">${entra?pct(df):'—'}</td>${gelo?`<td style="color:${at>1?'#6ee08a':at<1?'#ff8a80':'var(--txt)'}">${!entra?'—':at===1?'0%':(at>1?'+':'−')+Math.round(Math.abs(at-1)*100)+'%'}</td>`:''}</tr>`;}).join('');
+  let dono='';
+  if(ehConstrucao(t))dono=`<div class="vez">${J.dono[k]==null?'Sem dono':J.dono[k]===0?'Sua':ART(1).toUpperCase()+' '+NM(1)+' controla'} · +${RENDA_TER[t]} MP por turno para quem controla</div>`;
+  const html=`<div class="terTopo"><span class="terHex" style="background:${TER[t].cor}"></span><div><strong style="font-size:15px">${TER[t].nome}</strong>${dono}</div></div>
+    <p class="terDesc">${TER_DICA[t]}</p>
+    <table class="terTab"><thead><tr><th>Tipo de criatura</th><th title="Pontos de movimento gastos para entrar na casa">Mov.</th><th title="Chance de o golpe inimigo errar">Evasão</th>${gelo?'<th>Ataque</th>':''}</tr></thead><tbody>${linhas}</tbody></table>
+    <p class="vez" style="margin:6px 0 0">Mov. = pontos gastos para entrar. Evasão = chance de o golpe inimigo errar${ref?`. Em destaque: ${ESP[ref.esp].nome}`:''}.</p>`;
+  abreDet('Terreno',html);
+}
 function fechaFicha(){fichaAberta=null;document.getElementById('fichaDet').classList.remove('aberto');}
 const DESC_EFEITO={
   sono:'Sono: não anda nem luta no próximo turno do dono e não revida até lá. Despertar desfaz.',
@@ -3364,7 +3409,7 @@ function atualiza(){
   let dicaAcao='';
   if(J.invocando)dicaAcao=`<div class="prev">Escolha uma casa amarela para invocar ${ESP[J.invocando].nome}.</div>`;
   else if(minha&&J.sel&&!J.sel.agiu&&!menuAberto()&&temAlvos())dicaAcao=`<div class="prev">Clique num inimigo em vermelho para atacar${J.alvosMove.size?' (tracejado: anda até ele)':''}${J.sel.movido?' · '+TC()+' para não atacar':''}.</div>`;
-  else if(minha&&J.mg?.fase==='alvo'){const m=MAGIAS[J.mg.id];dicaAcao=`<div class="prev">✦ ${m.nome} (${m.custo} MP): ${m.alvo==='casa'?'clique na casa central da área':`clique numa ${m.alvo==='aliado'?'criatura sua':'criatura inimiga'} com borda roxa`}. ${TC()} volta à lista.</div>`;}
+  else if(minha&&J.mg?.fase==='alvo'){const m=MAGIAS[J.mg.id],v=TOQUE()?'toque':'clique';dicaAcao=`<div class="prev">✦ <b>${m.nome}</b> (${m.custo} MP): ${m.alvo==='casa'?`${v} na casa central da área`:`${v} numa ${m.alvo==='aliado'?'criatura sua':'criatura inimiga'} com borda roxa`}. ${TC()} volta à lista.<div class="vez" style="margin-top:2px">${m.desc}</div></div>`;}
   else if(minha&&J.mg?.fase==='destino')dicaAcao=`<div class="prev">✦ Portal: clique numa torre azul-clara para levar ${ESP[J.mg.u.esp].nome} (${TC()} volta à lista).</div>`;
   else if(minha&&J.fz?.fase==='alvo')dicaAcao=`<div class="prev">⚡ Clique numa criatura inimiga (borda laranja) para a Força atacar. ${TC()} volta.</div>`;
   else if(minha&&ehMestreSel()&&J.menuMestre==='invocar')dicaAcao=`<div class="prev">✚ ${TOQUE()?'Toque':'Clique'} numa construção piscando para invocar ali (${TC()} volta ao menu).</div>`;
@@ -3411,6 +3456,14 @@ function motivoLimite(){
   if(criaturas(0)+criaturas(1)>=LIM_MAPA)return `O mapa já tem ${LIM_MAPA} criaturas.`;
   return `Exército cheio (${criaturas(0)}/${limite(0)}). Capture mais torres para aumentar o limite.`;
 }
+// ícone e cor de cada magia na grade: verde cura, laranja dano, azul controle e movimento, roxo efeitos do mestre
+const ICONE_MAGIA={
+  cura:['✚','#6ee08a'],curaGeral:['✣','#6ee08a'],restauracao:['✙','#6ee08a'],santuario:['⌂','#6ee08a'],
+  lanca:['➶','#ffa050'],meteoros:['☄','#ffa050'],torrente:['✺','#ffa050'],tufao:['≋','#ffa050'],
+  sono:['☾','#7fc4ff'],despertar:['☼','#7fc4ff'],portal:['◎','#7fc4ff'],folego:['↻','#7fc4ff'],passoLargo:['»','#7fc4ff'],
+  vendaval:['⤳','#7fc4ff'],petrificar:['◆','#7fc4ff'],
+  barreira:['◈','#c58cff'],furia:['✶','#c58cff'],eclipse:['◐','#c58cff'],dominio:['◉','#c58cff'],
+};
 function dicaInvocar(){
   if(!podeTerMais(0))return motivoLimite();
   if(!INVOCAVEIS.some(s=>ESP[s].custo<=J.mp[0]))return 'MP insuficiente para invocar.';
@@ -3421,18 +3474,19 @@ function menus(){
   const mm=document.getElementById('menuM'),ps=document.getElementById('passar');
   const minha=J.vez===0&&!J.ocupado&&!J.fim;
   const m=mestreDe(0);
-  mm.style.width='';mm.classList.remove('grade');
+  mm.style.width='';mm.classList.remove('grade','magias');
   if(minha&&m&&J.mg?.fase==='lista'){
     // só aparecem as magias que têm algum alvo possível agora
-    const todas=magiasDe(0),lista=todas.filter(id=>magiaDisponivel(0,id));
-    let h=`<div class="tit" style="color:#c58cff">✦ Magias</div><div class="vez">${mpHtml(0)} · uma magia por turno</div><div class="inv" style="max-height:min(330px,55vh);overflow:auto">`;
+    // grade de cartões: ícone pelo tipo, nome e custo; a descrição aparece depois de escolher (faixa do topo)
+    const lista=magiasDe(0).filter(id=>magiaDisponivel(0,id));
+    let h=`<div class="mmTopo"><div class="tit" style="color:#c58cff">✦ Magias <span class="vez">· ${mpHtml(0)}</span></div><button class="mmX" onclick="sairMagia()" aria-label="Fechar">✕</button></div><div class="acoes mgGrade">`;
     for(const id of lista){
-      const g=MAGIAS[id],ok=J.mp[0]>=g.custo;
-      h+=`<button onclick="escolheMagia('${id}')" onmouseenter="prevMagia('${id}')" onmouseleave="prevMagia(null)" ${ok?'':'disabled'} title="${g.desc}${ok?'':' (MP insuficiente)'}"><span><span>${g.nome}${g.ordem?' <span style="color:#f2c14e">★</span>':''}</span><strong>${g.custo}</strong></span><small>${g.area}</small></button>`;
+      const g=MAGIAS[id],ok=J.mp[0]>=g.custo,[ic,cor]=ICONE_MAGIA[id]||['✦','#c58cff'];
+      h+=`<button class="acao mgCarta${g.ordem?' exclusiva':''}" onclick="escolheMagia('${id}')" onmouseenter="prevMagia('${id}')" onmouseleave="prevMagia(null)" ${ok?'':'disabled'} title="${g.desc}${g.ordem?` (exclusiva ${doM(0)})`:''}${ok?'':' (MP insuficiente)'}">${g.ordem?'<span class="estrela">★</span>':''}<span class="ic" style="color:${cor}">${ic}</span><b>${g.nome}</b><span class="mpCusto${ok?'':' falta'}">${g.custo} MP</span></button>`;
     }
-    if(!lista.length)h+='<div class="vez">Nenhuma magia tem alvo agora.</div>';
-    h+=`</div><div class="vez" style="margin-top:4px">${todas.length>lista.length?`${todas.length-lista.length} sem alvo agora (não aparecem). `:''}★ exclusiva ${doM(0)}.</div><button onclick="sairMagia()">✕ Voltar</button>`;
-    mm.innerHTML=h;mm.style.width='260px';mm.style.display='block';posMenu(mm,m);
+    h+='</div>';
+    if(!lista.length)h+='<div class="vez" style="margin-top:8px">Nenhuma magia tem alvo agora.</div>';
+    mm.innerHTML=h;mm.classList.add('magias');mm.style.width='280px';mm.style.display='block';posMenu(mm,m);
   }else if(minha&&m&&J.mg?.fase==='confirma'){
     const g=MAGIAS[J.mg.id];
     mm.innerHTML=`<div class="tit" style="color:#c58cff">✦ ${g.nome} · ${g.custo} MP</div><div class="vez" style="margin-top:4px">${g.desc}</div>
