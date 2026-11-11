@@ -50,6 +50,9 @@ body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,"Seg
 #menuM .mpCusto{margin-top:3px;font-size:11px;padding:1px 7px;border-radius:9px;background:#3a2f52;color:#d6c2ff}
 #menuM .mpCusto.falta{background:#3a2a2a;color:#ff8a80}
 #menuM .mgCarta:disabled{opacity:.55}
+/* PC: três colunas e sem rolagem (cabe a lista inteira) */
+.pc #menuM.magias{width:400px!important}
+.pc #menuM.magias .mgGrade{grid-template-columns:1fr 1fr 1fr;max-height:none;overflow:visible}
 #menuM .acao:disabled .ic{filter:grayscale(1);opacity:.5}
 #menuM .inv button{flex-direction:column;align-items:flex-start;gap:0}
 #menuM .inv button>span{display:flex;justify-content:space-between;width:100%}
@@ -101,9 +104,16 @@ button.pri:hover:not(:disabled){background:#3a6ea6}
 #topoMapa #zoomUI{position:static;justify-self:end;background:none;border:none;padding:0}
 #topoMapa #relogio{display:grid;grid-template-columns:auto auto;align-items:center;column-gap:8px;row-gap:2px}
 #topoMapa #relogio .quadro{grid-row:1/3;width:42px;height:42px}
-#rodape{font-size:12.5px;align-items:center;position:relative;grid-template-columns:1fr 1fr}
-#rodape .lado1{text-align:right}
-#rodape .quem{font-weight:600;margin-bottom:2px}
+/* placar espelhado: você | torre | inimigo; as torres de cada lado ficam coladas no ícone do meio */
+#rodape{font-size:13px;align-items:center;position:relative;grid-template-columns:1fr auto 1fr;gap:10px;padding:4px 10px}
+#rodape .pLado{display:flex;align-items:center;gap:12px;min-width:0;white-space:nowrap}
+#rodape .lado0{justify-content:flex-end}
+#rodape .lado1{justify-content:flex-start}
+#rodape .pNome{display:flex;align-items:center;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis}#rodape .pIt{display:inline-flex;align-items:center;gap:3px}
+#rodape .pIt .spr{margin:0}
+#rodape .pTor b{font-size:17px}
+#rodape .lado0 .pTor b{color:var(--p0)}#rodape .lado1 .pTor b{color:var(--p1)}
+#rodape .pTorre{width:30px;height:30px;image-rendering:pixelated;display:block}
 #rodape [title]{cursor:help}
 #info .prev:first-child{margin-top:0;margin-bottom:6px;padding:4px 8px;font-size:12px}
 h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-height:1.3}
@@ -195,6 +205,7 @@ button{touch-action:manipulation}
   #app{padding:6px;gap:6px}
   #colMapa,#lado,#ladoIn{display:contents}
   #topoMapa{order:1}#mapa{order:2;flex:none}#info{order:3;min-height:128px}#linhaFim{order:4}#rodape{order:5}#mini{order:6;max-width:420px}#caixaLog{order:7;flex:none;max-height:210px}
+  #rodape{order:1} /* placar logo abaixo do topo */
   .toque #mini{display:none} /* no toque, arrastar o próprio mapa substitui o mini mapa */
   #cena{width:min(600px,96%)}
 }
@@ -229,6 +240,21 @@ button{touch-action:manipulation}
   #zoomN{display:none}
 }
 
+/* ---------- PC com tela larga (classe "pc" no <html>, ligada pelo ajustaTela) ---------- */
+/* O jogo ocupa a janela inteira: o mapa estica até o pé da tela e a coluna da direita acompanha a altura. */
+html.pc,.pc body{height:100%;overflow:hidden}
+.pc #app{height:100vh;height:100dvh;max-width:none;box-sizing:border-box}
+.pc #colMapa{min-height:0}
+.pc #mapa{flex:1 1 0;min-height:0}
+.pc #cv{position:absolute;inset:0;width:100%;height:100%}
+@media (min-width:1600px){.pc #lado{width:340px}}
+/* placar no PC: maior e proporcional à largura da tela (cresce de 1366 a 1920+) */
+.pc #rodape{font-size:clamp(14px,.9vw,18px);padding:6px 14px;gap:clamp(12px,1.2vw,24px)}
+.pc #rodape .pLado{gap:clamp(14px,1.3vw,26px)}
+.pc #rodape .pNome .ponto{width:12px;height:12px}
+.pc #rodape .pTor b{font-size:clamp(20px,1.4vw,28px)}
+.pc #rodape .pTorre{width:clamp(36px,2.4vw,46px);height:clamp(36px,2.4vw,46px)}
+
 /* ---------- Celular em pé (classe "retrato" no <html>, ligada pelo ajustaTela) ---------- */
 /* Tudo cabe numa tela, sem rolar a página: topo fino, mapa com pelo menos 60% da altura, ficha, placar e botões. */
 html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -242,7 +268,7 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 .retrato #vez>span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* linha 1: turno e vez; linha 2: reserva e saldo de MP */
 /* alerta de cerco: só aparece quando falta 1 casa (ou nenhuma) para alguém vencer por cerco */
 #alertaCerco{display:none}
-.retrato #alertaCerco.on{display:flex;flex-direction:column;align-items:flex-end;gap:4px;position:absolute;right:8px;bottom:8px;z-index:3}
+#alertaCerco.on{display:flex;flex-direction:column;align-items:flex-end;gap:4px;position:absolute;right:8px;bottom:8px;z-index:3}
 #alertaCerco div{font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;background:#0e1015e6;border:1px solid;box-shadow:0 4px 14px #000a;cursor:help;animation:alertaCerco 1.6s ease-in-out infinite}
 #alertaCerco .contra{color:#ff8a80;border-color:#a8565f}
 #alertaCerco .favor{color:#f2c14e;border-color:#8a7330}
@@ -282,8 +308,11 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #fichaDet .topoAj button{min-height:0;padding:4px 10px}
 .retrato #info>.prev{order:-1;margin:0!important;padding:4px 8px;font-size:12px} /* dica da ação e previsão do ataque sempre no topo */
 .retrato #info .terr{margin-top:0;padding-top:5px}
-.retrato #rodape{order:1;flex:none;padding:4px 8px;font-size:12px;gap:8px} /* placar logo abaixo do topo (mesma ordem; vem depois dele no HTML) */
-.retrato #rodape .quem{margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.retrato #rodape{order:1;flex:none;padding:3px 8px;font-size:12px;gap:6px} /* placar logo abaixo do topo (mesma ordem; vem depois dele no HTML) */
+.retrato #rodape .pLado{gap:7px}
+.retrato #rodape .nm{display:none} /* no celular o nome sai: a bolinha da cor identifica o lado */
+.retrato #rodape .pTor b{font-size:15px}
+.retrato #rodape .pTorre{width:24px;height:24px}
 .retrato #linhaFim{order:5;flex:none}
 .retrato #btLog{display:block;flex:none}
 .retrato #btFim{padding:10px}
@@ -337,6 +366,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 .paisagem #info .terr{margin-top:0;padding-top:4px}
 /* registro e placar: só com o botão 📜 */
 .paisagem #rodape,.paisagem #caixaLog{display:none}
+.paisagem #alertaCerco.on{position:fixed;bottom:auto;top:52px;right:8px} /* embaixo ficam os botões */
 .paisagem #rodape.aberto{display:grid;position:fixed;right:6px;top:52px;width:min(380px,60vw);z-index:8;border-color:#4a5268;box-shadow:0 6px 30px #000d}
 .paisagem #caixaLog.aberto{display:flex;position:fixed;right:6px;top:168px;bottom:56px;width:min(380px,60vw);z-index:8;border-color:#4a5268;box-shadow:0 6px 30px #000d}
 .paisagem #caixaLog.aberto #log{overflow:auto}
@@ -400,8 +430,8 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
     <div id="zoomUI"><button onclick="mudaZoom(-1)" title="Afastar (−)">−</button><span id="zoomN">160%</span><button onclick="mudaZoom(1)" title="Aproximar (+)">+</button><button onclick="seguir(mestreDe(0),true)" title="Centralizar no seu mestre">⌖</button></div>
     <div id="menuJogo"></div>
   </div>
-  <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><div id="alertaCerco"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
   <div class="barra-mapa" id="rodape"></div>
+  <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><div id="alertaCerco"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
   </div>
   <div id="lado"><div id="ladoIn">
     <canvas id="mini" title="Mini mapa: clique ou arraste para mover a câmera"></canvas>
@@ -535,11 +565,13 @@ function ajustaTela(){
   const toque=TOQUE();
   const ret=toque&&matchMedia('(orientation:portrait) and (max-width:900px)').matches;
   const pai=toque&&!ret&&matchMedia('(orientation:landscape) and (max-height:560px)').matches;
+  // PC (tela larga): o jogo ocupa a janela inteira e o mapa preenche a altura que sobrar, como no celular
+  const pc=!ret&&!pai&&matchMedia('(min-width:901px)').matches;
   const mudouModo=ret!==RETRATO()||pai!==PAISAGEM();
-  de.classList.toggle('retrato',ret);de.classList.toggle('paisagem',pai);
+  de.classList.toggle('retrato',ret);de.classList.toggle('paisagem',pai);de.classList.toggle('pc',pc);
   FOLGA=pai?{t:48,b:108}:{t:0,b:0};
   let th=VH,rv=RES;
-  if(ret||pai){
+  if(ret||pai||pc){
     const m=document.getElementById('mapa'),w=m.clientWidth,h=m.clientHeight;
     if(w<50||h<50)return; // ainda sem layout
     LARG_CSS=w;
@@ -3360,26 +3392,19 @@ function fechaAjuda(){document.getElementById('ajuda').classList.remove('aberto'
 function alternaMenuJogo(ev){ev.stopPropagation();document.getElementById('menuJogo').classList.toggle('aberto');}
 function fechaMenuJogo(){document.getElementById('menuJogo').classList.remove('aberto');}
 addEventListener('click',ev=>{if(!ev.target.closest('#menuJogo'))fechaMenuJogo();});
+let PLACAR_TORRE=null; // ícone de torre do placar (pixel art gerada uma vez)
 function atualiza(){
   if(!J)return;
   relogio();
   document.getElementById('vez').innerHTML=J.fim?'Fim de jogo':`Turno ${J.turno} · ${J.vez===0?'<span style="color:var(--p0)">sua vez</span>':`<span style="color:var(--p1)">${ART(1)} ${NM(1)} está agindo…</span>`}`;
   // celular deitado: a reserva e o saldo de MP vão junto do turno, na barra do topo (o placar fica atrás do 📜)
-  // celular em pé: duas linhas, turno em cima e reserva + saldo embaixo (o placar fica só com torres e exército)
+  // celular em pé: só o turno (mana, monstros e torres ficam no placar abaixo do topo)
   const mpCurto=l=>J.mp[l]>=MANA_MAX?`<span style="color:#ff6b6b;font-weight:700" title="Limite de mana (${MANA_MAX}). A renda acima disso se perde: gaste!">${J.mp[l]} MP máx</span>`:`${J.mp[l]} MP`;
-  if(RETRATO()&&!J.fim){const sd=saldo(0);
-    document.getElementById('vez').innerHTML=`<span>Turno ${J.turno} · ${J.vez===0?'<span style="color:var(--p0)">sua vez</span>':`<span style="color:var(--p1)">${NM(1)} agindo…</span>`}</span><span>${mpCurto(0)} <b title="Saldo por turno: renda das torres, castelo e fortalezas menos a manutenção das criaturas" style="color:${sd>0?'#6ee08a':sd<0?'#ff8a80':'var(--txt)'}">${sd>=0?'+':'−'}${Math.abs(sd)}</b></span>`;}
+  if(RETRATO()&&!J.fim)document.getElementById('vez').innerHTML=`<span>Turno ${J.turno} · ${J.vez===0?'<span style="color:var(--p0)">sua vez</span>':`<span style="color:var(--p1)">${NM(1)} agindo…</span>`}</span>`;
   if(PAISAGEM()&&!J.fim){const sd=saldo(0);document.getElementById('vez').innerHTML+=` · ${mpHtml(0)} <b style="color:${sd>0?'#6ee08a':sd<0?'#ff8a80':'var(--txt)'}">${sd>=0?'+':'−'}${Math.abs(sd)}</b>`;}
   const minha=J.vez===0&&!J.ocupado&&!J.fim;
   // rodapé do mapa: você à esquerda, o Necromancer à direita, os botões do turno no meio
-  const r0=renda(0),m0=manutencao(0),s0=r0-m0,c0=cerco(1),c1=cerco(0);
-  const corCerco=c=>c.n>=c.precisa-1&&c.n>0?'#f2c14e':'var(--txt)';
-  const deficit=s0<0?Math.max(0,Math.floor(J.mp[0]/-s0)):null;
-  const lado=l=>`<div class="lado${l}"><div class="quem"><span class="ponto" style="background:var(--p${l})"></span>${l?NM(1):'Você'} · ${mpHtml(l)}</div>
-    <div class="vez">${torresDe(l)} torres · ${criaturas(l)}/${limite(l)} criaturas</div>
-    ${l===0?`<div class="vez" title="Renda +${r0} (torres, castelo e fortalezas) · manutenção −${m0} (criaturas)">Saldo <b style="color:${s0>0?'#6ee08a':s0<0?'#ff8a80':'var(--txt)'}">${s0>=0?'+':'−'}${Math.abs(s0)}/turno</b>${deficit!=null?` <span style="color:#ff8a80" title="Com a reserva zerada, suas criaturas ficam enfraquecidas e podem debandar.">· reserva acaba em ${deficit} turno${deficit===1?'':'s'}</span>`:''}</div>`:''}
-    <div class="vez" title="${ORDENS[J.ordem[l]].desc} Uma magia e uma Força por turno.">${l?'':NM(0)+' · '}✦ ${J.magiaUsada[l]?'usada':'pronta'} · ⚡ ${J.forcaUsada[l]?'usada':'pronta'}</div>
-    <div class="vez" title="Casas da área urbana ${l?doM(1):'sua'} ocupadas ${l?'pelo seu exército':peloM(1)}; com ${(l?c1:c0).precisa} delas no início do turno de quem cerca, ele vence">Cercado <b style="color:${corCerco(l?c1:c0)}">${(l?c1:c0).n}/${(l?c1:c0).precisa}</b></div></div>`;
+  const c0=cerco(1),c1=cerco(0);
   // menu do jogo (☰): novo jogo, salvar e carregar
   document.getElementById('menuJogo').innerHTML=`
     <button onclick="abreConfig()">↻ Novo jogo</button>
@@ -3387,10 +3412,21 @@ function atualiza(){
     <button onclick="fechaMenuJogo();abrirCarregar()" ${J.ocupado?'disabled':''}>📂 Carregar</button>
     <button onclick="event.stopPropagation();mudaModoCena()" title="Tela que mostra cada combate">⚔ Tela de combate: ${MODOS_CENA[modoCena()]}</button>
     ${pedidoInstalar?'<button onclick="fechaMenuJogo();instalarApp()" title="Coloca o jogo na tela inicial, em tela cheia e jogável sem internet">⤓ Instalar como app</button>':''}`;
-  // celular em pé: placar numa linha por lado (sua MP está no topo; o cerco só aparece como alerta sobre o mapa)
-  const ladoC=l=>`<div class="lado${l}"><div class="quem"><span class="ponto" style="background:var(--p${l})" title="${l?`${ART(1)} ${NM(1)}`:'Você'}"></span>${l?`<span title="Reserva de mana ${doM(1)}">${mpCurto(1)}</span> · `:'Você · '}<span class="vez" title="Torres controladas">${torresDe(l)} torres</span> · <span class="vez" title="Criaturas no exército / limite">${criaturas(l)}/${limite(l)}</span></div></div>`;
-  document.getElementById('rodape').innerHTML=RETRATO()?ladoC(0)+ladoC(1):lado(0)+lado(1);
-  // alerta de cerco (celular em pé): some enquanto ninguém estiver a 1 casa de vencer
+  // placar espelhado, logo abaixo do topo (PC e celular): nome · mana (+saldo) · monstros · torres | ícone de torre | torres · monstros · mana · nome
+  // as torres ficam coladas no ícone do meio; o cerco só aparece como alerta sobre o mapa
+  {const it=(l,tipo,html,dica)=>`<span class="pIt ${tipo}" title="${dica}">${html}</span>`;
+   const lado=l=>{
+     const sd=saldo(l),r=renda(l),m=manutencao(l),def=sd<0?Math.max(0,Math.floor(J.mp[l]/-sd)):null;
+     const partes=[
+       `<span class="pNome"><span class="ponto" style="background:var(--p${l})"></span><span class="nm">${l?NM(1):'Você'}</span></span>`,
+       it(l,'pMana',`${mpCurto(l)} <b style="color:${sd>0?'#6ee08a':sd<0?'#ff8a80':'var(--txt)'}">${sd>=0?'+':'−'}${Math.abs(sd)}</b>`,
+         `Mana ${l?doM(1):'sua'}: reserva ${J.mp[l]} (máx. ${MANA_MAX}). Por turno: renda +${r} (torres, castelo e fortalezas) e manutenção −${m} (criaturas).${def!=null?` No ritmo atual, a reserva acaba em ${def} turno${def===1?'':'s'}.`:''}`),
+       it(l,'pMon',`${iconeSpr(INVOCAVEIS[0],document.documentElement.classList.contains('pc')?Math.round(Math.min(30,Math.max(22,innerWidth*.0145))):18,l)}${criaturas(l)}/${limite(l)}`,`Criaturas no exército ${l?doM(1):'seu'} / limite (2 + 1 por torre)`),
+       it(l,'pTor',`<b>${torresDe(l)}</b>`,l?`Torres ${doM(1)}`:'Suas torres')];
+     return `<div class="pLado lado${l}">${(l?partes.reverse():partes).join('')}</div>`;};
+   if(!PLACAR_TORRE)PLACAR_TORRE=iconePx(estiloIcone('torre'),'torre').toDataURL();
+   document.getElementById('rodape').innerHTML=lado(0)+`<img class="pTorre" src="${PLACAR_TORRE}" alt="Torres" title="Torres: você à esquerda, ${ART(1)} ${NM(1)} à direita">`+lado(1);}
+  // alerta de cerco (sobre o mapa, PC e celular): some enquanto ninguém estiver a 1 casa de vencer
   {const perto=c=>c.n>0&&c.n>=c.precisa-1,a=[];
    if(!J.fim&&perto(c0))a.push(`<div class="contra" title="${ART(1).toUpperCase()} ${NM(1)} ocupa ${c0.n} casa${c0.n>1?'s':''} da sua área urbana. Com ${c0.precisa} no início do turno ${ART(1)==='a'?'dela':'dele'}, ${ART(1)==='a'?'ela':'ele'} vence.">⚠ Cercado ${c0.n}/${c0.precisa}</div>`);
    if(!J.fim&&perto(c1))a.push(`<div class="favor" title="Você ocupa ${c1.n} casa${c1.n>1?'s':''} da área urbana ${doM(1)}. Com ${c1.precisa} no início do seu turno, você vence.">⚔ Cercando ${c1.n}/${c1.precisa}</div>`);
