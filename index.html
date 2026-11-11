@@ -1777,6 +1777,14 @@ function prevMagia(id){
 const temAlvos=()=>J.alvosSet.size+(J.alvosMove?J.alvosMove.size:0)>0;
 const podeAlgumaEsp=()=>podeTerMais(0)&&INVOCAVEIS.some(s=>ESP[s].custo<=J.mp[0]);
 function podeInvocarAlgo(){return podeAlgumaEsp()&&hexesInvocacao(0).size>0;}
+// botão Invocar do mestre: já escolhe a construção livre mais perto do mestre inimigo e abre a lista de criaturas
+// (as outras construções válidas seguem com borda dourada; tocar numa delas troca o lugar)
+function invocarRapido(){
+  const hs=[...hexesInvocacao(0)];if(!hs.length)return;
+  const ini=mestreDe(1),dist=k=>ini?d6c(...DK(k),ini.c,ini.r):0;
+  hs.sort((a,b)=>dist(a)-dist(b)||a-b);
+  abrirInvHex(hs[0]);
+}
 function abrirInvHex(k){desseleciona();J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=k;atualiza();}
 function menuMestre(modo){J.menuMestre=modo;atualiza();}
 function estadoAviso(){const m=mestreDe(0);return [J.mp[0],criaturas(0),m?m.c+','+m.r+','+m.movido+','+m.agiu:''].join('|');}
@@ -1847,6 +1855,10 @@ async function clique(c,r){
       atualiza();return;
     }
   }
+  // criatura sua sob efeito ruim (Sono, Petrificar…): abre ao lado dela as magias que ajudam, como Despertar (tocar de novo fecha)
+  if(alvo&&alvo.lado===0&&alvo!==inspAntes&&afetada(alvo)&&J.invocou?.[0]&&magiaPronta(alvo)){
+    desseleciona();J.insp=alvo;J.menuAlvo=alvo;J.menuAlvoFase='magia';atualiza();return; // direto na lista: na criatura sua não há Força
+  }
   if(alvo&&alvo.lado===0&&(!alvo.agiu||ESP[alvo.esp].mestre))seleciona(alvo);
   else{
     desseleciona();
@@ -1859,8 +1871,15 @@ async function clique(c,r){
   atualiza();
 }
 // ----- Menu de magia/Força numa criatura inimiga -----
-// magias de alvo único que valem contra esta criatura agora (as de área e as globais seguem no menu do mestre)
-const magiasNoAlvo=u=>magiasDe(0).filter(id=>MAGIAS[id].alvo==='inimigo'&&alvoMagia(0,id,K(u.c,u.r)));
+// magias de alvo único que valem nesta criatura agora (as de área e as globais seguem no menu do mestre):
+// no inimigo, as de ataque/controle; numa criatura sua, as de ajuda (Despertar, Cura…)
+// a magia que desfaz o efeito da criatura (ex.: Despertar no Sono) vem primeiro
+const DESFAZ={despertar:'sono'};
+const magiasNoAlvo=u=>magiasDe(0).filter(id=>MAGIAS[id].alvo===(u.lado===0?'aliado':'inimigo')&&alvoMagia(0,id,K(u.c,u.r)))
+  .sort((a,b)=>(DESFAZ[b]&&temEfeito(u,DESFAZ[b])?1:0)-(DESFAZ[a]&&temEfeito(u,DESFAZ[a])?1:0));
+// efeitos ruins numa criatura sua que fazem o toque nela abrir o menu de magias
+const EFEITOS_RUINS=['sono','petra'];
+const afetada=u=>EFEITOS_RUINS.some(c=>temEfeito(u,c));
 const forcaServe=u=>!!mestreDe(0)&&elementaisDe(0).length>0&&alvosForca(0).includes(u);
 // botões do menu: somem quando a magia/Força do turno já foi usada
 const magiaPronta=u=>podeMagia(0)&&magiasNoAlvo(u).length>0;
@@ -3544,7 +3563,7 @@ function menus(){
     const acao=(ic,cor,nome,sub,fn,ok,dica)=>`<button class="acao" onclick="${fn}" ${ok?'':'disabled'}${dica?` title="${dica}"`:''}><span class="ic" style="color:${cor}">${ic}</span><b>${nome}</b><small>${sub}</small></button>`;
     const invOk=podeInvocarAlgo();
     const invPq=!podeTerMais(0)?'exército cheio':!INVOCAVEIS.some(s=>ESP[s].custo<=J.mp[0])?'MP insuficiente':!hexesInvocacao(0).size?'sem construção livre ao lado':'';
-    h+=acao('✚','#f2c14e','Invocar',invPq||`exército ${criaturas(0)}/${limite(0)}`,"menuMestre('invocar')",invOk,invPq?dicaInvocar():'Mostra onde dá para invocar uma criatura.');
+    h+=acao('✚','#f2c14e','Invocar',invPq||`exército ${criaturas(0)}/${limite(0)}`,"invocarRapido()",invOk,invPq?dicaInvocar():'Escolhe uma construção livre e abre a lista de criaturas.');
     if(J.turno>3&&!m.movido&&J.alc&&J.alc.dest.size>1)h+=acao('➜','#7fc4ff','Mover',`até ${movDe(m)} casas`,"menuMestre('mover')",true);
     if(!m.agiu&&temAlvos())h+=acao('⚔','#ff8a80','Atacar',`${J.alvosSet.size+J.alvosMove.size} ao alcance`,"menuMestre('atacar')",true);
     // Magia e Força: aparecem depois da primeira invocação e somem no turno em que já foram usadas
@@ -3566,15 +3585,16 @@ function menus(){
       const e=ESP[s],ok=J.mp[0]>=e.custo&&podeTerMais(0);
       h+=`<button onclick="escolherInvocacao('${s}')" ${ok?'':'disabled'}><b class="custo">${e.custo}</b>${iconeSpr(s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${EL[e.el]}">${ELN[e.el]}</small></button>`;
     }
-    h+=`</div>${podeTerMais(0)?'':`<div class="vez">${motivoLimite()}</div>`}<button onclick="J.invHex=null;atualiza()">✕ Fechar</button>`;
+    h+=`</div>${podeTerMais(0)?'':`<div class="vez">${motivoLimite()}</div>`}${hexesInvocacao(0).size>1?`<div class="vez" style="margin-top:4px">Para invocar em outro lugar, ${TOQUE()?'toque':'clique'} em outra construção com borda dourada.</div>`:''}<button onclick="J.invHex=null;atualiza()">✕ Fechar</button>`;
     mm.classList.add('grade');
     mm.innerHTML=h;mm.style.display='block';posMenu(mm,{c:hc,r:hr});
   }else if(minha&&J.menuAlvo&&J.un.includes(J.menuAlvo)){
-    // criatura inimiga tocada: magias de alvo único que a atingem e a Força, lançadas direto nela
+    // criatura inimiga tocada (ou sua, sob Sono/Petrificar): magias de alvo único que valem nela e a Força, lançadas direto nela
     // primeiro só os botões Magia e Força; cada um abre a sua lista. Já usada no turno, a opção some.
     const u=J.menuAlvo,e=ESP[u.esp],fase=J.menuAlvoFase;
-    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p1)">${nome(u)}</div><div class="vez">Vida ${u.hp}/${e.hp} · ${mpHtml(0)}</div></div><button class="mmX" onclick="J.menuAlvo=null;atualiza()" aria-label="Fechar">✕</button></div>`;
-    const volta=`<button onclick="J.menuAlvoFase=null;atualiza()">← Voltar</button>`;
+    const efs=u.lado===0?SELOS_MAGIA.filter(([c])=>temEfeito(u,c)).map(([c])=>DESC_EFEITO[c].split(':')[0]):[];
+    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p${u.lado?1:0})">${nome(u)}</div><div class="vez">Vida ${u.hp}/${e.hp} · ${mpHtml(0)}</div>${efs.length?`<div class="vez" style="color:#d6c2ff">${efs.join(' · ')}</div>`:''}</div><button class="mmX" onclick="J.menuAlvo=null;atualiza()" aria-label="Fechar">✕</button></div>`;
+    const volta=u.lado===0?'':`<button onclick="J.menuAlvoFase=null;atualiza()">← Voltar</button>`; // criatura sua: só a lista, o ✕ fecha
     if(fase==='magia'){
       h+=`<div class="vez" style="margin-top:6px;color:#c58cff">✦ Magia · uma por turno</div><div class="inv">`;
       for(const id of magiasNoAlvo(u)){
