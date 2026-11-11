@@ -225,7 +225,15 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 .retrato #topoMapa h1{display:flex;gap:4px;flex:none}
 .retrato .nomeJogo{display:none}
 .retrato h1 .bt{margin:0}
-.retrato #vez{font-size:12px;line-height:1.2;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.retrato #vez{font-size:12px;line-height:1.25;min-width:0;overflow:hidden}
+.retrato #vez>span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* linha 1: turno e vez; linha 2: reserva e saldo de MP */
+/* alerta de cerco: só aparece quando falta 1 casa (ou nenhuma) para alguém vencer por cerco */
+#alertaCerco{display:none}
+.retrato #alertaCerco.on{display:flex;flex-direction:column;align-items:flex-end;gap:4px;position:absolute;right:8px;bottom:8px;z-index:3}
+#alertaCerco div{font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;background:#0e1015e6;border:1px solid;box-shadow:0 4px 14px #000a;cursor:help;animation:alertaCerco 1.6s ease-in-out infinite}
+#alertaCerco .contra{color:#ff8a80;border-color:#a8565f}
+#alertaCerco .favor{color:#f2c14e;border-color:#8a7330}
+@keyframes alertaCerco{0%,100%{opacity:1}50%{opacity:.55}}
 .retrato #topoMapa #relogio{column-gap:6px}
 .retrato #topoMapa #relogio .quadro{width:34px;height:34px}
 .retrato #zoomUI button:not(:last-child),.retrato #zoomN{display:none}
@@ -235,12 +243,22 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 .retrato #menuM{max-height:58vh;max-height:58dvh}
 #dicaMapa{position:absolute;left:6px;right:6px;top:6px;z-index:2;pointer-events:none}
 #dicaMapa .prev{margin:0;padding:5px 9px;font-size:12px;background:#2a2230eb;border:1px solid #5a4a6a;box-shadow:0 4px 14px #0009}
-.retrato #info{order:3;flex:0 1 150px;min-height:64px;overflow-y:auto;padding:6px 8px;font-size:12px;display:flex;flex-direction:column;gap:5px}
+.retrato #info{order:3;flex:0 0 108px;min-height:64px;overflow-y:auto;padding:6px 8px;font-size:12px;display:flex;flex-direction:column;gap:5px}
 .retrato #info>*{flex:none}
+/* ficha curta: o retrato é um botão que abre a ficha completa */
+.fichaFoto{position:relative;padding:0!important;min-height:0!important;border:1px solid #4a5268;border-radius:7px;background:#14161c;line-height:0;flex:none}
+.fichaFoto .spr{margin:0;border-radius:6px}
+.fichaFoto .ic{position:absolute;right:-5px;bottom:-5px;line-height:14px;font-size:11px;width:15px;height:15px;border-radius:50%;background:#2f5d8f;color:#fff;display:grid;place-items:center}
+#fichaDet{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:7;padding:8px}
+#fichaDet.aberto{display:flex}
+#fichaDet>.cx{width:min(420px,100%);max-height:85vh;max-height:85dvh;overflow:auto;font-size:12.5px;box-shadow:0 10px 40px #000c}
+#fichaDet .topoAj{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+#fichaDet .topoAj h2{margin:0}
+#fichaDet .topoAj button{min-height:0;padding:4px 10px}
 .retrato #info>.prev{order:-1;margin:0!important;padding:4px 8px;font-size:12px} /* dica da ação e previsão do ataque sempre no topo */
 .retrato #info .terr{margin-top:0;padding-top:5px}
-.retrato #rodape{order:4;flex:none;padding:4px 8px;font-size:12px;gap:8px}
-.retrato #rodape .quem{margin-bottom:0}
+.retrato #rodape{order:1;flex:none;padding:4px 8px;font-size:12px;gap:8px} /* placar logo abaixo do topo (mesma ordem; vem depois dele no HTML) */
+.retrato #rodape .quem{margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .retrato #linhaFim{order:5;flex:none}
 .retrato #btLog{display:block;flex:none}
 .retrato #btFim{padding:10px}
@@ -357,7 +375,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
     <div id="zoomUI"><button onclick="mudaZoom(-1)" title="Afastar (−)">−</button><span id="zoomN">160%</span><button onclick="mudaZoom(1)" title="Aproximar (+)">+</button><button onclick="seguir(mestreDe(0),true)" title="Centralizar no seu mestre">⌖</button></div>
     <div id="menuJogo"></div>
   </div>
-  <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
+  <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><div id="alertaCerco"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
   <div class="barra-mapa" id="rodape"></div>
   </div>
   <div id="lado"><div id="ladoIn">
@@ -367,6 +385,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
+<div id="fichaDet" onclick="if(event.target===this)fechaFicha()"><div class="cx"><div class="topoAj"><h2>Detalhes</h2><button onclick="fechaFicha()" title="Fechar (Esc)">✕</button></div><div id="fichaDetIn"></div></div></div>
 <div id="ajuda" onclick="if(event.target===this)fechaAjuda()"><div class="cx ajuda"><div class="topoAj"><h1>Como jogar</h1><button onclick="fechaAjuda()" title="Fechar (Esc)">✕</button></div>
       <p><b>Acerto:</b> cada ataque são 3 golpes. A chance de cada golpe acertar é a precisão de quem ataca menos a evasão do terreno de quem defende, mais ou menos 25% pelo horário (mínimo 5%, máximo 95%). Passe o mouse no alvo para ver a conta.</p>
       <p><b>Dia e noite:</b> o tempo avança em ciclo: Manhã (1 rodada) → Dia (2) → Entardecer (1) → Noite (2). <span style="color:#f2d36b">☀ Fogo e Planta</span> ganham precisão de dia; <span style="color:#9fb4ff">☾ Água e Arcano</span>, à noite. No horário oposto, perdem. O efeito é de 10% na Manhã e no Entardecer e de 25% no Dia e na Noite. Terra, Ar e os mestres não mudam.</p>
@@ -3175,15 +3194,14 @@ function desenha(now){
 }
 
 // ---------- Painel ----------
-function fichaUnidade(u){
+function fichaUnidade(u,completa){
+  // celular em pé: só retrato, nome, vida e XP; tocar no retrato abre a ficha completa
+  if(RETRATO()&&!completa)return fichaCurta(u);
   // ficha compacta: retrato, nome e etiquetas; barra de vida; números em grade; textos longos viram dica (passar o mouse)
   const e=ESP[u.esp],frac=Math.max(0,u.hp/e.hp),cat=catDe(u.esp);
   const corV=frac>.5?'#5fd27a':frac>.25?'#e6c34a':'#e85a4f';
   const mh=modHora(u.esp);
   const num=(rot,val,extra='',dica='')=>`<div class="num"${dica?` title="${dica}"`:''}><small>${rot}</small><b>${val}</b>${extra}</div>`;
-  const tags=[`<span class="tag" title="${cat.desc}">${cat.nome}</span>`];
-  if(temGolpeMistico(u.esp))tags.push('<span class="tag" title="Ignora 20% da evasão do terreno do alvo">✦ Golpe Místico</span>');
-  if(e.alc>1)tags.push('<span class="tag">À distância</span>');
   return `<div class="ficha">
     <div class="fichaTopo">${iconeSpr(u.esp,44,'cor')}<div style="flex:1;min-width:0">
       <div class="fichaNome"><strong style="color:${COR[u.lado]}">${e.nome}</strong> <span class="tags" style="display:inline;flex:1" title="Vence ${VANT[e.el].map(x=>ELN[x]).join(', ')} · perde para ${perdePara(e.el).map(x=>ELN[x]).join(', ')}. ${e.mestre?'Mestres não são afetados pelo horário.':HORA_DESC[HORA_EL[e.el]]}">${tagEl(e.el)}</span><span class="vez">${e.mestre?'Mestre':'Nível '+e.tier}</span></div>
@@ -3192,10 +3210,48 @@ function fichaUnidade(u){
     <div class="nums nums${e.mestre?4:e.evo?6:5}">${num('Atq',e.atk,'','Ataque')}${num('Def',e.def,'','Defesa')}${num('Mov',e.mov,'','Movimento')}${num('Prec',Math.round(precisao(u.esp)*100)+'%',mh?`<em style="color:${mh>0?'#6ee08a':'#ff8a80'}">${mh>0?'▲':'▼'}</em>`:'',`Precisão${mh?' ('+motivoHora(u.esp)+')':''}`)}${e.evo?num('XP',`${u.xp}/${e.xp}`,'',`Experiência; evolui para ${ESP[e.evo].nome}`):''}${e.mestre?'':num('Manut',manutEsp(u.esp),'','Manutenção em MP por turno')}</div>
     ${u.semMana?`<div class="vez" style="color:#b48cff">Sem mana: ataca 25% mais fraco e recebe 25% mais dano.</div>`:''}
     ${efeitosHtml(u)}${e.mestre?mestreHtml(u.lado):''}
-    <div class="tags">${tagHora(u.esp)}${tags.join('')}</div>
-    <div class="vantLinha"><span>Vence</span>${VANT[e.el].map(x=>`<i style="background:${EL[x]}">${ELN[x]}</i>`).join('')}<span>· perde para</span>${perdePara(e.el).map(x=>`<i style="background:${EL[x]}">${ELN[x]}</i>`).join('')}</div>
+    ${tagsVant(u)}
   </div>`;
 }
+// etiquetas (horário, categoria, habilidades) e a linha de vantagens: na ficha completa e na curta
+function tagsVant(u,antes=''){
+  const e=ESP[u.esp],cat=catDe(u.esp);
+  const tags=[`<span class="tag" title="${cat.desc}">${cat.nome}</span>`];
+  if(temGolpeMistico(u.esp))tags.push('<span class="tag" title="Ignora 20% da evasão do terreno do alvo">✦ Golpe Místico</span>');
+  if(e.alc>1)tags.push('<span class="tag">À distância</span>');
+  return `<div class="tags">${antes}${tagHora(u.esp)}${tags.join('')}</div>
+    <div class="vantLinha"><span>Vence</span>${VANT[e.el].map(x=>`<i style="background:${EL[x]}">${ELN[x]}</i>`).join('')}<span>· perde para</span>${perdePara(e.el).map(x=>`<i style="background:${EL[x]}">${ELN[x]}</i>`).join('')}</div>`;
+}
+function fichaCurta(u){
+  const e=ESP[u.esp],frac=Math.max(0,u.hp/e.hp);
+  const corV=frac>.5?'#5fd27a':frac>.25?'#e6c34a':'#e85a4f';
+  // estados que mudam o jogo ficam visíveis como etiquetas curtas (o texto inteiro está na ficha completa)
+  const est=SELOS_MAGIA.filter(([c])=>temEfeito(u,c)).map(([c])=>`<span class="tag" style="background:#3a2f52;color:#d6c2ff">${DESC_EFEITO[c].split(':')[0]}</span>`);
+  if(u.semMana)est.unshift('<span class="tag" style="background:#3a2f52;color:#b48cff">Sem mana</span>');
+  return `<div class="ficha"><div class="fichaTopo">
+    <button class="fichaFoto" onclick="abreFicha(${u.id})" aria-label="Ver detalhes de ${e.nome}">${iconeSpr(u.esp,44,'cor')}<span class="ic">ⓘ</span></button>
+    <div style="flex:1;min-width:0">
+      <div class="fichaNome"><strong style="color:${COR[u.lado]}">${e.nome}</strong> <span class="tags" style="display:inline;flex:1">${tagEl(e.el)}</span><span class="vez">${e.mestre?'Mestre':'Nível '+e.tier}</span></div>
+      <div class="barraVida"><i style="width:${frac*100}%;background:${corV}"></i><span>${u.hp} / ${e.hp}</span></div>${e.evo?`<div class="barraXp"><i style="width:${Math.min(100,u.xp/e.xp*100)}%"></i></div>`:''}
+    </div></div>${tagsVant(u,est.join(''))}</div>`;
+}
+// linha do terreno da casa hv: nome, dono e renda; e o efeito dele (movimento, evasão, ataque) para a criatura ref
+function terrenoHtml(hv,ref){
+  const k=K(...hv),t=J.ter[k];
+  let d='';
+  if(ehConstrucao(t))d+=` · ${J.dono[k]==null?'sem dono':J.dono[k]===0?'sua':doM(1)} · +${RENDA_TER[t]} MP/turno`;
+  let efeito='';
+  if(ref){
+    const cm=custoMov(ref.esp,t),df=defTer(ref.esp,t),at=atkTer(ref.esp,t);
+    efeito=`<div class="vez" title="Efeito do terreno para ${ESP[ref.esp].nome}">${isFinite(cm)?`Movimento <b style="color:var(--txt)">${cm}</b>`:'<b style="color:#ff8a80">Não pode entrar</b>'} · Evasão <b style="color:${df<0?'#ff8a80':'var(--txt)'}">${Math.round(df*100)}%</b>${at!==1?` · Ataque <b style="color:${at>1?'#6ee08a':'#ff8a80'}">${at>1?'+':'−'}${Math.round(Math.abs(at-1)*100)}%</b>`:''}</div>`;
+  }
+  return `<div class="terr" title="${TER_DICA[t]}"><div class="fichaNome"><strong>${TER[t].nome} <span class="ic">ⓘ</span></strong><span class="vez">${d.replace(/^ · /,'')}</span></div>${efeito}</div>`;
+}
+// ficha completa (celular em pé): abre ao tocar no retrato da criatura; embaixo, o terreno onde ela está
+let fichaAberta=null;
+function abreFicha(id){const u=J&&J.un.find(x=>x.id===id);if(!u)return;fichaAberta=id;
+  document.getElementById('fichaDetIn').innerHTML=fichaUnidade(u,true)+terrenoHtml([u.c,u.r],u);document.getElementById('fichaDet').classList.add('aberto');}
+function fechaFicha(){fichaAberta=null;document.getElementById('fichaDet').classList.remove('aberto');}
 const DESC_EFEITO={
   sono:'Sono: não anda nem luta no próximo turno do dono e não revida até lá. Despertar desfaz.',
   petra:'Petrificada: não anda nem luta no próximo turno do dono e não revida até lá. Despertar não desfaz.',
@@ -3262,6 +3318,10 @@ function atualiza(){
   relogio();
   document.getElementById('vez').innerHTML=J.fim?'Fim de jogo':`Turno ${J.turno} · ${J.vez===0?'<span style="color:var(--p0)">sua vez</span>':`<span style="color:var(--p1)">${ART(1)} ${NM(1)} está agindo…</span>`}`;
   // celular deitado: a reserva e o saldo de MP vão junto do turno, na barra do topo (o placar fica atrás do 📜)
+  // celular em pé: duas linhas, turno em cima e reserva + saldo embaixo (o placar fica só com torres e exército)
+  const mpCurto=l=>J.mp[l]>=MANA_MAX?`<span style="color:#ff6b6b;font-weight:700" title="Limite de mana (${MANA_MAX}). A renda acima disso se perde: gaste!">${J.mp[l]} MP máx</span>`:`${J.mp[l]} MP`;
+  if(RETRATO()&&!J.fim){const sd=saldo(0);
+    document.getElementById('vez').innerHTML=`<span>Turno ${J.turno} · ${J.vez===0?'<span style="color:var(--p0)">sua vez</span>':`<span style="color:var(--p1)">${NM(1)} agindo…</span>`}</span><span>${mpCurto(0)} <b title="Saldo por turno: renda das torres, castelo e fortalezas menos a manutenção das criaturas" style="color:${sd>0?'#6ee08a':sd<0?'#ff8a80':'var(--txt)'}">${sd>=0?'+':'−'}${Math.abs(sd)}</b></span>`;}
   if(PAISAGEM()&&!J.fim){const sd=saldo(0);document.getElementById('vez').innerHTML+=` · ${mpHtml(0)} <b style="color:${sd>0?'#6ee08a':sd<0?'#ff8a80':'var(--txt)'}">${sd>=0?'+':'−'}${Math.abs(sd)}</b>`;}
   const minha=J.vez===0&&!J.ocupado&&!J.fim;
   // rodapé do mapa: você à esquerda, o Necromancer à direita, os botões do turno no meio
@@ -3280,10 +3340,14 @@ function atualiza(){
     <button onclick="fechaMenuJogo();abrirCarregar()" ${J.ocupado?'disabled':''}>📂 Carregar</button>
     <button onclick="event.stopPropagation();mudaModoCena()" title="Tela que mostra cada combate">⚔ Tela de combate: ${MODOS_CENA[modoCena()]}</button>
     ${pedidoInstalar?'<button onclick="fechaMenuJogo();instalarApp()" title="Coloca o jogo na tela inicial, em tela cheia e jogável sem internet">⤓ Instalar como app</button>':''}`;
-  // celular em pé: placar em duas linhas por lado (reserva e saldo; torres, exército e cerco)
-  const ladoC=l=>{const c=l?c1:c0;return `<div class="lado${l}"><div class="quem"><span class="ponto" style="background:var(--p${l})"></span>${l?NM(1):'Você'} · ${mpHtml(l)}${l?'':` <b title="Saldo por turno: renda +${r0} (torres, castelo e fortalezas) · manutenção −${m0} (criaturas)" style="color:${s0>0?'#6ee08a':s0<0?'#ff8a80':'var(--txt)'}">${s0>=0?'+':'−'}${Math.abs(s0)}</b>`}</div>
-    <div class="vez"><span title="Torres controladas">${torresDe(l)} torres</span> · <span title="Criaturas no exército / limite">${criaturas(l)}/${limite(l)}</span> · <span title="Casas da área urbana ${l?doM(1):'sua'} ocupadas pelo adversário; com ${c.precisa} delas no início do turno de quem cerca, ele vence">cerco <b style="color:${corCerco(c)}">${c.n}/${c.precisa}</b></span></div></div>`;};
+  // celular em pé: placar numa linha por lado (sua MP está no topo; o cerco só aparece como alerta sobre o mapa)
+  const ladoC=l=>`<div class="lado${l}"><div class="quem"><span class="ponto" style="background:var(--p${l})" title="${l?`${ART(1)} ${NM(1)}`:'Você'}"></span>${l?`<span title="Reserva de mana ${doM(1)}">${mpCurto(1)}</span> · `:'Você · '}<span class="vez" title="Torres controladas">${torresDe(l)} torres</span> · <span class="vez" title="Criaturas no exército / limite">${criaturas(l)}/${limite(l)}</span></div></div>`;
   document.getElementById('rodape').innerHTML=RETRATO()?ladoC(0)+ladoC(1):lado(0)+lado(1);
+  // alerta de cerco (celular em pé): some enquanto ninguém estiver a 1 casa de vencer
+  {const perto=c=>c.n>0&&c.n>=c.precisa-1,a=[];
+   if(!J.fim&&perto(c0))a.push(`<div class="contra" title="${ART(1).toUpperCase()} ${NM(1)} ocupa ${c0.n} casa${c0.n>1?'s':''} da sua área urbana. Com ${c0.precisa} no início do turno ${ART(1)==='a'?'dela':'dele'}, ${ART(1)==='a'?'ela':'ele'} vence.">⚠ Cercado ${c0.n}/${c0.precisa}</div>`);
+   if(!J.fim&&perto(c1))a.push(`<div class="favor" title="Você ocupa ${c1.n} casa${c1.n>1?'s':''} da área urbana ${doM(1)}. Com ${c1.precisa} no início do seu turno, você vence.">⚔ Cercando ${c1.n}/${c1.precisa}</div>`);
+   const el=document.getElementById('alertaCerco');el.innerHTML=a.join('');el.classList.toggle('on',a.length>0);}
   // Encerrar turno fica sozinho no pé da coluna da direita
   // botão ✦ Magia: depois da primeira invocação, enquanto a magia do turno não foi usada
   {const bm=document.getElementById('btMagia'),ok=minha&&J.invocou?.[0]&&podeMagia(0);
@@ -3315,19 +3379,8 @@ function atualiza(){
   if(mostra&&!PAISAGEM())inf+=fichaUnidade(mostra);
   // com a previsão de ataque na tela, o terreno do alvo já entra na conta e a linha do terreno sai
   const pv=previsao();inf+=pv;
-  if(HV&&!pv&&!PAISAGEM()){
-    const k=K(...HV),t=J.ter[k];
-    let d='';
-    if(ehConstrucao(t))d+=` · ${J.dono[k]==null?'sem dono':J.dono[k]===0?'sua':doM(1)} · +${RENDA_TER[t]} MP/turno`;
-    // efeito do terreno para a criatura em foco (a selecionada, ou a que está no hexágono)
-    const ref=J.sel||mostra;
-    let efeito='';
-    if(ref){
-      const cm=custoMov(ref.esp,t),df=defTer(ref.esp,t),at=atkTer(ref.esp,t);
-      efeito=`<div class="vez" title="Efeito do terreno para ${ESP[ref.esp].nome}">${isFinite(cm)?`Movimento <b style="color:var(--txt)">${cm}</b>`:'<b style="color:#ff8a80">Não pode entrar</b>'} · Evasão <b style="color:${df<0?'#ff8a80':'var(--txt)'}">${Math.round(df*100)}%</b>${at!==1?` · Ataque <b style="color:${at>1?'#6ee08a':'#ff8a80'}">${at>1?'+':'−'}${Math.round(Math.abs(at-1)*100)}%</b>`:''}</div>`;
-    }
-    inf+=`<div class="terr" title="${TER_DICA[t]}"><div class="fichaNome"><strong>${TER[t].nome} <span class="ic">ⓘ</span></strong><span class="vez">${d.replace(/^ · /,'')}</span></div>${efeito}</div>`;
-  }
+  // celular em pé: com criatura na ficha, a linha do terreno sai (fica só quando não há criatura para mostrar)
+  if(HV&&!pv&&!PAISAGEM()&&!(RETRATO()&&mostra))inf+=terrenoHtml(HV,J.sel||mostra);
   document.getElementById('info').classList.toggle('vazio',!inf); // deitado: sem nada a mostrar, a ficha some
   {const el=document.getElementById('info'),h=inf||`<span class="vez">${TOQUE()?'Toque numa criatura, ou segure o dedo numa casa, para ver os detalhes.':'Passe o mouse sobre uma criatura ou um terreno para ver os detalhes.'}</span>`;
    if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h;}} // só troca se mudou, para não perder a rolagem
@@ -3582,7 +3635,7 @@ cv.addEventListener('wheel',ev=>{ev.preventDefault();mudaZoom(ev.deltaY<0?1:-1);
 cv.addEventListener('contextmenu',ev=>{ev.preventDefault();if(ultTipo==='mouse')cancelar();});
 addEventListener('keydown',ev=>{
   if(CENA&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();toqueCena();return;}
-  if(ev.key==='Escape'){if(document.getElementById('ajuda').classList.contains('aberto')){fechaAjuda();return;}cancelar();}
+  if(ev.key==='Escape'){if(document.getElementById('ajuda').classList.contains('aberto')){fechaAjuda();return;}if(fichaAberta!=null){fechaFicha();return;}cancelar();}
   const P={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[ev.key];
   if(P){ev.preventDefault();CAM.x+=P[0]*50/CAM.z;CAM.y+=P[1]*50/CAM.z;CAM.mao=true;limitaCam();}
   if(ev.key==='+'||ev.key==='=')mudaZoom(1);if(ev.key==='-')mudaZoom(-1);
