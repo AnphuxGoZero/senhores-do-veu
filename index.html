@@ -122,6 +122,8 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .vantLinha i{font-style:normal;color:#fff;font-size:10.5px;padding:0 6px;border-radius:8px;line-height:16px}
 .vantLinha span+span,.vantLinha i+span{margin-left:3px} /* altura reservada: o registro não pula quando a ficha muda */
 #btFim{flex:1;padding:12px;font-size:15px;font-weight:600;letter-spacing:.02em}
+#btFim.brilha,#btFim.brilha:hover:not(:disabled){background:#a87a22;border-color:#f2c14e;color:#fff;animation:brilhaFim 1.6s ease-in-out infinite}
+@keyframes brilhaFim{0%,100%{box-shadow:0 0 0 0 #f2c14e00}50%{box-shadow:0 0 14px 3px #f2c14ecc}}
 #linhaFim{display:flex;gap:6px;flex:none}#btLog{display:none}
 /* atalho da Magia ao lado do Encerrar turno: só aparece quando dá para lançar; brilha quando há magia com alvo */
 #btMagia{display:none;flex:none;color:#d9b8ff;border-color:#6a4a8a;font-size:15px}
@@ -3354,7 +3356,9 @@ function atualiza(){
    bm.classList.toggle('ativo',!!ok);
    bm.classList.toggle('brilha',!!ok&&!J.mg&&magiasDe(0).some(id=>J.mp[0]>=MAGIAS[id].custo&&magiaDisponivel(0,id)));}
   const bt=document.getElementById('btFim');
-  bt.disabled=!minha;bt.classList.toggle('brilha',minha&&turnoEsgotado());
+  // nada mais a fazer (criaturas já agiram, não dá para invocar e o mestre não tem quem atacar): o botão fica dourado
+  {const m=mestreDe(0),mestreAtaca=m&&!m.agiu&&alvosDesde(m,m.c,m.r).length>0;
+   bt.disabled=!minha;bt.classList.toggle('brilha',minha&&turnoEsgotado()&&!mestreAtaca);}
   bt.textContent=J.fim?'Fim de jogo':J.vez===0?'Encerrar turno':`Vez ${doM(1)}…`;
   // dicas do que fazer agora vão para o topo da caixa de informações
   let dicaAcao='';
@@ -3504,18 +3508,8 @@ function menus(){
     mm.innerHTML=h;mm.style.width=fase?'260px':'220px';mm.style.display='block';posMenu(mm,u);
   }else mm.style.display='none';
 
-  if(minha&&avisoFimTurno()){
-    const ataca=m&&!m.agiu&&alvosDesde(m,m.c,m.r).length>0;
-    const tit=criaturas(0)?'Suas criaturas já agiram.':'Nada mais a fazer neste turno.';
-    let h=`<div><strong>${tit}</strong></div>`;
-    if(m)h+=`<div class="vez">${dicaInvocar()}</div>`;
-    if(ataca)h+=`<div class="vez" style="color:#ff8a80">⚔ ${ESP[m.esp].nome} ainda pode atacar.</div>`;
-    h+=`<div class="linha">
-        <button class="pri" onclick="fimTurno()">Passar o turno</button>
-        <button onclick="dispensarPassar()">Ainda não</button>
-      </div>`;
-    ps.innerHTML=h;ps.style.display='block';
-  }else ps.style.display='none';
+  // fim de turno: sem caixa sobre o mapa; quem avisa é o Encerrar turno dourado (veja atualiza)
+  ps.style.display='none';
   // no toque não há botão direito nem Esc: um botão no canto do mapa cancela (os menus já têm o próprio ✕ Fechar)
   document.getElementById('btCancela').style.display=
     TOQUE()&&minha&&mm.style.display==='none'&&(J.sel||J.invocando||J.invHex!=null||J.mg||J.fz||J.insp)?'block':'none';
