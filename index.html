@@ -29,6 +29,17 @@ body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,"Seg
 #menuM .tit{font-weight:600;margin-bottom:2px}
 #menuM button{width:100%;margin-top:5px;text-align:left}
 #menuM .inv{margin-top:4px}
+/* menu do mestre: cabeçalho com ✕ e grade de ações em cartões */
+#menuM .mmTopo{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding-bottom:6px;border-bottom:1px solid #2e3340}
+#menuM .mmX{width:auto;margin:0;padding:3px 9px;line-height:1.2}
+#menuM .acoes{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+#menuM .acao{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;text-align:center;padding:8px 4px 7px;min-height:72px}
+#menuM .acao:last-child:nth-child(odd){grid-column:span 2;min-height:0;flex-direction:row;gap:8px}
+#menuM .acao:last-child:nth-child(odd) small{margin-left:2px}
+#menuM .acao .ic{font-size:22px;line-height:1.1}
+#menuM .acao b{font-size:14px}
+#menuM .acao small{font-size:11px;color:#aab3c5;line-height:1.2}
+#menuM .acao:disabled .ic{filter:grayscale(1);opacity:.5}
 #menuM .inv button{flex-direction:column;align-items:flex-start;gap:0}
 #menuM .inv button>span{display:flex;justify-content:space-between;width:100%}
 #passar{left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;padding:14px 18px;min-width:280px;max-width:90%;border-color:#f2c14e88;box-shadow:0 10px 40px #000c}
@@ -889,7 +900,7 @@ function gravar(slot){
   const s={v:SAVE_VER,quando:Date.now(),nid,
     ter:J.ter,dono:J.dono,tema:J.tema,turno:J.turno,vez:J.vez,mp:J.mp,deficit:J.deficit,
     logs:J.logs.slice(0,30),avisoCerco:J.avisoCerco||null,ultInvIA:J.ultInvIA||[],
-    ordem:J.ordem,manaBase:J.manaBase,magiaUsada:J.magiaUsada,forcaUsada:J.forcaUsada,elem:J.elem,ciclo:J.ciclo,cicloDir:J.cicloDir,
+    invocou:J.invocou||[false,false],ordem:J.ordem,manaBase:J.manaBase,magiaUsada:J.magiaUsada,forcaUsada:J.forcaUsada,elem:J.elem,ciclo:J.ciclo,cicloDir:J.cicloDir,
     un:J.un.map(u=>{const c={...u};delete c.anim;delete c.hit;return c;})};
   try{localStorage.setItem(SAVE_CHAVE+slot,JSON.stringify(s));return true;}catch(e){return false;}
 }
@@ -903,6 +914,7 @@ function carregar(slot){
      ...estadoMagiaNovo(s.ordem||['egide','eclipse'],0)};
   // saves de antes das magias não têm estes campos: ficam com os valores de um jogo novo
   if(s.magiaUsada)J.magiaUsada=s.magiaUsada;if(s.forcaUsada)J.forcaUsada=s.forcaUsada;if(s.elem)J.elem=s.elem;
+  J.invocou=s.invocou||[true,true]; // saves antigos: Magia já liberada
   J.ciclo=s.ciclo??(s.turno-1)%CICLO.length;J.cicloDir=s.cicloDir||1;
   nid=Math.max(s.nid,...J.un.map(u=>u.id+1));
   zoomInicio();
@@ -1248,6 +1260,7 @@ function hexesInvocacao(l){
 function invocar(l,esp,c,r){
   J.mp[l]-=ESP[esp].custo;
   const u=criaUnidade(esp,l,c,r);u.movido=true;u.agiu=true;seguir(u);
+  (J.invocou||(J.invocou=[false,false]))[l]=true; // a Magia do menu do mestre só aparece depois da primeira invocação
   flutua(u,'Invocado','#f2c14e');
   log(`${OM(l)} invocou ${ESP[esp].nome}.`);
 }
@@ -1583,7 +1596,9 @@ function melhorHexAtaque(u,e){
   return best;
 }
 function seleciona(u){
-  J.sel=u;J.alc=u.movido?null:alcancaveis(u);
+  // o mestre do jogador só anda a partir do 4º turno (antes disso fica no castelo invocando)
+  const mestreParado=u.lado===0&&ESP[u.esp].mestre&&J.turno<=3;
+  J.sel=u;J.alc=u.movido||mestreParado?null:alcancaveis(u);
   J.alvosSet=new Set();J.alvosMove=new Map();
   J.menuMestre=(u.lado===0&&ESP[u.esp].mestre)?'principal':null;
   if(u.agiu){seguir(u);return;}
@@ -1667,7 +1682,7 @@ function turnoEsgotado(){
   return J.un.every(u=>u.lado!==0||ESP[u.esp].mestre||u.agiu)&&!(mestreDe(0)&&podeInvocarAlgo());
 }
 function avisoFimTurno(){
-  if(J.vez!==0||J.ocupado||J.fim||J.sel||J.invocando||J.invHex!=null||J.menuInv||J.mg||J.fz)return false;
+  if(J.vez!==0||J.ocupado||J.fim||J.sel||J.invocando||J.invHex!=null||J.menuInv||J.mg||J.fz||J.menuAlvo)return false;
   if(J.passarDispensado===estadoAviso())return false;
   // só avisa quando não resta nada: todas as criaturas agiram e não dá mais para invocar
   return turnoEsgotado();
@@ -1677,7 +1692,7 @@ async function clique(c,r){
   if(J.vez!==0||J.ocupado||J.fim)return;
   const k=K(c,r),alvo=unidadeEm(c,r),s=J.sel;
   // a ficha "presa" de um inimigo (ou de criatura sua que já agiu) solta a cada clique; clicar nela de novo só solta
-  const inspAntes=J.insp;J.insp=null;
+  const inspAntes=J.insp;J.insp=null;J.menuAlvo=null;
   if(J.mg||J.fz){await cliqueMagia(k);return;}
   if(J.invocando){
     const ok=J.invocHex.has(k);
@@ -1690,6 +1705,11 @@ async function clique(c,r){
   if(J.invHex!=null){
     const era=J.invHex;J.invHex=null;
     if(era===k){atualiza();return;}
+  }
+  // botão Invocar do mestre: as construções válidas piscam; clicar numa abre a lista, fora dela volta ao menu
+  if(ehMestreSel()&&J.menuMestre==='invocar'){
+    if(hexesInvocacao(0).has(k))abrirInvHex(k);else menuMestre('principal');
+    return;
   }
   // clicar numa construção válida ao lado do mestre abre o menu de invocação ali
   const podeAndarAli=s&&!menuAberto()&&J.alc&&J.alc.dest.has(k);
@@ -1726,8 +1746,36 @@ async function clique(c,r){
     }
   }
   if(alvo&&alvo.lado===0&&(!alvo.agiu||ESP[alvo.esp].mestre))seleciona(alvo);
-  else{desseleciona();if(alvo&&alvo!==inspAntes)J.insp=alvo;}
+  else{
+    desseleciona();
+    if(alvo&&alvo!==inspAntes){
+      J.insp=alvo;
+      // inimigo: abre ao lado dele as magias e a Força que podem atingi-lo (tocar de novo fecha)
+      if(alvo.lado!==0&&J.invocou?.[0]&&(magiaPronta(alvo)||forcaPronta(alvo))){J.menuAlvo=alvo;J.menuAlvoFase=null;}
+    }
+  }
   atualiza();
+}
+// ----- Menu de magia/Força numa criatura inimiga -----
+// magias de alvo único que valem contra esta criatura agora (as de área e as globais seguem no menu do mestre)
+const magiasNoAlvo=u=>magiasDe(0).filter(id=>MAGIAS[id].alvo==='inimigo'&&alvoMagia(0,id,K(u.c,u.r)));
+const forcaServe=u=>!!mestreDe(0)&&elementaisDe(0).length>0&&alvosForca(0).includes(u);
+// botões do menu: somem quando a magia/Força do turno já foi usada
+const magiaPronta=u=>podeMagia(0)&&magiasNoAlvo(u).length>0;
+const forcaPronta=u=>!J.forcaUsada[0]&&forcaServe(u);
+async function magiaNoAlvo(id){
+  const u=J.menuAlvo;if(!u||J.ocupado)return;
+  const m=MAGIAS[id],alvo=alvoMagia(0,id,K(u.c,u.r));
+  J.menuAlvo=null;
+  if(!alvo||!podeMagia(0)||J.mp[0]<m.custo){atualiza();return;}
+  if(m.destinos){J.mg={fase:'destino',u:alvo.u,dest:m.destinos(0,alvo.u)};atualiza();return;}
+  J.insp=null;atualiza();
+  await lancarMagia(0,id,alvo);atualiza();
+}
+async function forcaNoAlvo(el){
+  const u=J.menuAlvo;if(!u||J.ocupado)return;
+  J.menuAlvo=null;J.insp=null;atualiza();
+  await lancarForca(0,el,u);atualiza();
 }
 function cancelar(){
   if(J.vez!==0||J.ocupado)return;
@@ -1736,9 +1784,9 @@ function cancelar(){
   if(J.mg||J.fz){sairMagia();return;}
   if(J.invHex!=null)J.invHex=null;
   else if(J.invocando){J.invocando=null;J.invocHex=null;}
-  else if(ehMestreSel()&&(J.menuMestre==='mover'||J.menuMestre==='atacar'))J.menuMestre='principal';
+  else if(ehMestreSel()&&(J.menuMestre==='mover'||J.menuMestre==='atacar'||J.menuMestre==='invocar'))J.menuMestre='principal';
   else if(J.sel){if(J.sel.movido)J.sel.agiu=true;desseleciona();}
-  J.insp=null;J.menuInv=false;
+  J.insp=null;J.menuInv=false;J.menuAlvo=null;
   atualiza();
 }
 function escolherInvocacao(esp){
@@ -1754,7 +1802,7 @@ function escolherInvocacao(esp){
 }
 async function fimTurno(){
   if(J.vez!==0||J.ocupado||J.fim)return;
-  desseleciona();J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=null;J.mg=null;J.fz=null;J.prevArea=null;
+  desseleciona();J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=null;J.mg=null;J.fz=null;J.prevArea=null;J.menuAlvo=null;
   fimDeTurno(0);
   J.vez=1;inicioTurno(1);atualiza();
   if(J.fim)return;
@@ -3041,7 +3089,7 @@ function desenha(now){
   const cam=camadaTerreno();
   ctx.drawImage(cam.cor,0,0,VW,VH);
   // com uma criatura selecionada, as casas fora do alcance ficam em preto e branco
-  const mostraAlc=J.alc&&!menuAberto()&&!(ehMestreSel()&&J.menuMestre==='atacar');
+  const mostraAlc=J.alc&&!menuAberto()&&!(ehMestreSel()&&(J.menuMestre==='atacar'||J.menuMestre==='invocar'));
   if(mostraAlc){
     ctx.save();ctx.beginPath();
     for(let k=0;k<COLS*ROWS;k++)if(!J.alc.dest.has(k)){const [x,y]=centro(...DK(k));for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-30);i?ctx.lineTo(x+R*Math.cos(a),y+R*Math.sin(a)):ctx.moveTo(x+R*Math.cos(a),y+R*Math.sin(a));}ctx.closePath();}
@@ -3072,6 +3120,11 @@ function desenha(now){
     const [x,y]=centro(...DK(f.k));ctx.save();ctx.globalAlpha=(1-t)*.55;hexPath(x,y,R-1.5);ctx.fillStyle=f.cor;ctx.fill();ctx.restore();
   }
   if(ociosa&&podeAlgumaEsp())for(const k of hexesInvocacao(0))marca(k,k===J.invHex?'rgba(242,193,78,.45)':'rgba(242,193,78,.12)','#f2c14e',k!==J.invHex);
+  // depois do botão Invocar: as construções onde dá para invocar piscam em dourado
+  if(J.vez===0&&!J.ocupado&&ehMestreSel()&&J.menuMestre==='invocar'){
+    const p=0.5+0.5*Math.sin(now/180);
+    for(const k of hexesInvocacao(0))marca(k,`rgba(242,193,78,${0.12+0.4*p})`,`rgba(255,220,120,${0.55+0.45*p})`);
+  }
   if(!menuAberto())for(const u of J.un)if(J.alvosSet.has(u.id))marca(K(u.c,u.r),'rgba(255,80,70,.3)','#ff5b52');
   // casas urbanas ocupadas pelo inimigo piscam em laranja
   const pisca=0.5+0.5*Math.sin(now/250);
@@ -3216,6 +3269,7 @@ function atualiza(){
   else if(minha&&J.mg?.fase==='alvo'){const m=MAGIAS[J.mg.id];dicaAcao=`<div class="prev">✦ ${m.nome} (${m.custo} MP): ${m.alvo==='casa'?'clique na casa central da área':`clique numa ${m.alvo==='aliado'?'criatura sua':'criatura inimiga'} com borda roxa`}. ${TC()} volta à lista.</div>`;}
   else if(minha&&J.mg?.fase==='destino')dicaAcao=`<div class="prev">✦ Portal: clique numa torre azul-clara para levar ${ESP[J.mg.u.esp].nome} (${TC()} volta à lista).</div>`;
   else if(minha&&J.fz?.fase==='alvo')dicaAcao=`<div class="prev">⚡ Clique numa criatura inimiga (borda laranja) para a Força atacar. ${TC()} volta.</div>`;
+  else if(minha&&ehMestreSel()&&J.menuMestre==='invocar')dicaAcao=`<div class="prev">✚ ${TOQUE()?'Toque':'Clique'} numa construção piscando para invocar ali (${TC()} volta ao menu).</div>`;
   else if(minha&&ehMestreSel()&&J.menuMestre==='mover')dicaAcao=`<div class="prev">Clique numa casa azul para mover ${ART(0)} ${NM(0)} (${TC()} volta ao menu).</div>`;
 
   // celular em pé: a dica da ação vai para uma faixa sobre o mapa, e a ficha fica só com a criatura
@@ -3305,17 +3359,24 @@ function menus(){
     h+=`</div><button onclick="J.fz={fase:'alvo'};atualiza()">✕ Voltar</button>`;
     mm.innerHTML=h;mm.style.display='block';posMenu(mm,{c:hc,r:hr});
   }else if(minha&&m&&J.sel===m&&menuAberto()){
-    let h=`<div class="tit" style="color:var(--p0)">${ESP[m.esp].nome}</div><div class="vez">${mpHtml(0)}${J.mp[0]<MANA_MAX?' disponíveis':''}</div>`;
-    if(J.menuMestre==='principal'){
-      if(!m.movido&&J.alc&&J.alc.dest.size>1)h+=`<button onclick="menuMestre('mover')">➜ Mover</button>`;
-      if(!m.agiu&&temAlvos())h+=`<button onclick="menuMestre('atacar')">⚔ Atacar</button>`;
-      h+=`<button onclick="abrirMagia()" ${podeMagia(0)?'':'disabled'} title="Abre a lista de magias com alvo possível agora.">✦ Magia${J.magiaUsada[0]?' · já usada neste turno':''}</button>`;
-      const fzOk=podeForca(0)&&alvosForca(0).length>0;
-      const fzPq=J.forcaUsada[0]?'já usada neste turno':!elementaisDe(0).length?'sem elementais':J.mp[0]<CUSTO_FORCA?'MP insuficiente':!alvosForca(0).length?'sem alvos':'';
-      h+=`<button onclick="abrirForca()" ${fzOk?'':'disabled'} title="Um elemental ataca uma criatura inimiga em qualquer lugar do mapa.">⚡ Força · ${CUSTO_FORCA} MP${fzPq?' · '+fzPq:''}</button>`;
-      h+=`<div class="vez">${dicaInvocar()}</div>`;
-      h+=`<button onclick="desseleciona();atualiza()">✕ Fechar</button>`;
+    // cabeçalho (nome, MP e ✕) e uma grade de ações; cada ação só aparece quando já faz sentido na partida
+    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p0)">${ESP[m.esp].nome}</div><div class="vez">${mpHtml(0)}</div></div><button class="mmX" onclick="desseleciona();atualiza()" aria-label="Fechar">✕</button></div><div class="acoes">`;
+    const acao=(ic,cor,nome,sub,fn,ok,dica)=>`<button class="acao" onclick="${fn}" ${ok?'':'disabled'}${dica?` title="${dica}"`:''}><span class="ic" style="color:${cor}">${ic}</span><b>${nome}</b><small>${sub}</small></button>`;
+    const invOk=podeInvocarAlgo();
+    const invPq=!podeTerMais(0)?'exército cheio':!INVOCAVEIS.some(s=>ESP[s].custo<=J.mp[0])?'MP insuficiente':!hexesInvocacao(0).size?'sem construção livre ao lado':'';
+    h+=acao('✚','#f2c14e','Invocar',invPq||`exército ${criaturas(0)}/${limite(0)}`,"menuMestre('invocar')",invOk,invPq?dicaInvocar():'Mostra onde dá para invocar uma criatura.');
+    if(J.turno>3&&!m.movido&&J.alc&&J.alc.dest.size>1)h+=acao('➜','#7fc4ff','Mover',`até ${movDe(m)} casas`,"menuMestre('mover')",true);
+    if(!m.agiu&&temAlvos())h+=acao('⚔','#ff8a80','Atacar',`${J.alvosSet.size+J.alvosMove.size} ao alcance`,"menuMestre('atacar')",true);
+    // Magia e Força: aparecem depois da primeira invocação e somem no turno em que já foram usadas
+    if(J.invocou?.[0]){
+      if(podeMagia(0))h+=acao('✦','#c58cff','Magia','1 por turno','abrirMagia()',true,'Abre a lista de magias com alvo possível agora.');
+      if(!J.forcaUsada[0]){
+        const fzOk=podeForca(0)&&alvosForca(0).length>0;
+        const fzPq=!elementaisDe(0).length?'sem elementais':J.mp[0]<CUSTO_FORCA?'MP insuficiente':!alvosForca(0).length?'sem alvos':`${CUSTO_FORCA} MP`;
+        h+=acao('⚡','#ffa050','Força',fzPq,'abrirForca()',fzOk,'Um elemental ataca uma criatura inimiga em qualquer lugar do mapa.');
+      }
     }
+    h+='</div>';
     mm.innerHTML=h;mm.style.display='block';posMenu(mm,m);
   }else if(minha&&J.invHex!=null){
     const [hc,hr]=DK(J.invHex);
@@ -3328,6 +3389,33 @@ function menus(){
     h+=`</div>${podeTerMais(0)?'':`<div class="vez">${motivoLimite()}</div>`}<button onclick="J.invHex=null;atualiza()">✕ Fechar</button>`;
     mm.classList.add('grade');
     mm.innerHTML=h;mm.style.display='block';posMenu(mm,{c:hc,r:hr});
+  }else if(minha&&J.menuAlvo&&J.un.includes(J.menuAlvo)){
+    // criatura inimiga tocada: magias de alvo único que a atingem e a Força, lançadas direto nela
+    // primeiro só os botões Magia e Força; cada um abre a sua lista. Já usada no turno, a opção some.
+    const u=J.menuAlvo,e=ESP[u.esp],fase=J.menuAlvoFase;
+    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p1)">${nome(u)}</div><div class="vez">Vida ${u.hp}/${e.hp} · ${mpHtml(0)}</div></div><button class="mmX" onclick="J.menuAlvo=null;atualiza()" aria-label="Fechar">✕</button></div>`;
+    const volta=`<button onclick="J.menuAlvoFase=null;atualiza()">← Voltar</button>`;
+    if(fase==='magia'){
+      h+=`<div class="vez" style="margin-top:6px;color:#c58cff">✦ Magia · uma por turno</div><div class="inv">`;
+      for(const id of magiasNoAlvo(u)){
+        const g=MAGIAS[id],ok=J.mp[0]>=g.custo;
+        h+=`<button onclick="magiaNoAlvo('${id}')" ${ok?'':'disabled'} title="${g.desc}${ok?'':' (MP insuficiente)'}"><span><span>${g.nome}${g.ordem?' <span style="color:#f2c14e">★</span>':''}</span><strong>${g.custo}</strong></span><small>${g.desc}</small></button>`;
+      }
+      h+=`</div>${volta}`;
+    }else if(fase==='forca'){
+      h+=`<div class="vez" style="margin-top:6px;color:#ffa050">⚡ Força · ${CUSTO_FORCA} MP · uma por turno</div><div class="inv">`;
+      for(const el of elementaisDe(0)){
+        const ee=elementalPara(0,el,u),ch=Math.round(chanceAcerto(ee,u,terDe(u))*100),mv=multEl(el,e.el);
+        h+=`<button onclick="forcaNoAlvo('${el}')" ${J.mp[0]>=CUSTO_FORCA?'':'disabled'}><span><span style="color:${EL[el]}">● ${ESP[ELEMENTAIS[el]].nome}</span><strong>${J.elem[0][el]}/100</strong></span><small>Acerto ${ch}%${mv>1?' · vantagem':mv<1?' · desvantagem':''}</small></button>`;
+      }
+      h+=`</div>${volta}`;
+    }else{
+      h+='<div class="acoes">';
+      if(magiaPronta(u)){const n=magiasNoAlvo(u).length;h+=`<button class="acao" onclick="J.menuAlvoFase='magia';atualiza()"><span class="ic" style="color:#c58cff">✦</span><b>Magia</b><small>${n} ${n>1?'opções':'opção'}</small></button>`;}
+      if(forcaPronta(u))h+=`<button class="acao" onclick="J.menuAlvoFase='forca';atualiza()"><span class="ic" style="color:#ffa050">⚡</span><b>Força</b><small>${CUSTO_FORCA} MP</small></button>`;
+      h+='</div>';
+    }
+    mm.innerHTML=h;mm.style.width=fase?'260px':'220px';mm.style.display='block';posMenu(mm,u);
   }else mm.style.display='none';
 
   if(minha&&avisoFimTurno()){
