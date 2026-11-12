@@ -463,7 +463,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
       <p>Clique numa unidade sua e depois numa casa azul para movê-la. Inimigos em vermelho podem ser atacados: os de borda contínua estão ao lado; nos tracejados, a criatura anda sozinha até uma casa vizinha e ataca. Todo ataque é corpo a corpo.</p>
       <p>Clique no seu mestre para abrir o menu dele: Mover, Atacar, Magia ou Força.</p>
       <p><b>Magia:</b> as magias do seu mestre são liberadas quando você conquista a sua primeira torre (o mestre inimigo segue a mesma regra). Cada mestre tem 9 magias comuns e 2 da sua ordem (escolhida no novo jogo), e lança <b>uma magia por turno</b>, em qualquer momento, desde que tenha MP. Em Magia abre a lista das magias que têm algum alvo agora (Cura só aparece se houver criatura sua ferida, e assim por diante). Escolha uma e clique no alvo destacado em roxo; as que pegam uma área grande mostram a área e pedem confirmação. Esc volta à lista. Mestres nunca são afetados por magias. Marcas no mapa: <b>S</b> Sono, <b>P</b> Petrificada, <b>B</b> Barreira, <b>L</b> Passo Largo, <b>F</b> Fúria, <b>D</b> Dominada.</p>
-      <p><b>Força:</b> uma vez por turno, por 40 MP, um elemental da sua ordem ataca qualquer criatura inimiga do mapa e enfrenta o revide. Ele começa com 100 de vida, não se cura durante a partida e, se morrer, não volta. A Força não gasta a magia do turno.</p>
+      <p><b>Força:</b> uma vez por turno, por 40 MP, um elemental da sua ordem ataca qualquer criatura inimiga do mapa e enfrenta o revide. O elemental é feito para derrubar gigantes: contra nível 0 causa metade do dano, contra nível 1 três quartos, e contra nível 2, 3 e mestres o dano é cheio. Ele começa com 100 de vida, não se cura durante a partida e, se morrer, não volta. A Força não gasta a magia do turno.</p>
       <p>Para invocar, clique numa construção sua (castelo, fortaleza ou torre) que esteja livre e ao lado do seu mestre. Elas ficam com borda dourada tracejada.</p>
       <p>Seu exército pode ter até 2 criaturas + 1 por torre que você controla. Ganhe torres (e MP) terminando o movimento sobre elas.</p>
       <p><b>Mana:</b> no início do turno você ganha +15 por torre e +5 por fortaleza ou castelo, e paga a manutenção das criaturas (3, 6 ou 10 por nível). A sobra vai para a reserva, que guarda no máximo 300 MP (o que passar disso se perde); o que faltar sai dela. Com a reserva zerada, as criaturas sem pagamento ficam enfraquecidas (selo roxo) e, se o déficit continuar, uma delas debanda a cada turno.</p>
@@ -1178,7 +1178,7 @@ function comecarJogo(){gravaPrefs(cfgSel);fecharSaves();novoJogo(cfgSel);}
 const OLHA_SPR={faisca:-1,brasador:1,pirolorde:1,gotim:1,corrente:1,abissal:1,broto:1,espinhal:-1,anciao:1,
   cascalho:-1,pedregulho:1,monolito:1,penugem:-1,gaviao:1,tempestario:1,olho:-1,vigia:-1,oraculo:-1,
   arquimaga:1,barao:1,warlock:-1,wizard:-1,sorcerer:-1,
-  brasa:1,girino:-1,argila:1,semente:1,ovoAlado:1,essencia:1,
+  brasa:1,girino:-1,argila:-1,semente:-1,ovoAlado:1,essencia:1,
   diabrete:1,demonio:1,lordeDemonio:1,cavaloMarinho:-1,polvo:1,kraken:1,
   homemLagarto:-1,lagartoDuplo:-1,hidra:-1,filhote:-1,unicornio:-1,pegasus:-1,
   anzu:1,quimera:1,espada:1,armamentario:1,armadura:1};
@@ -1585,7 +1585,7 @@ function danoBase(a,d){
   const ea=ESP[a.esp],ed=ESP[d.esp];
   // sem mana: ataca 25% mais fraco e recebe 25% mais dano
   const fome=(a.semMana?0.75:1)*(d.semMana?1.25:1);
-  return 1.3*ea.atk*20/(20+ed.def)*multEl(ea.el,ed.el)*fome*atkTer(a.esp,J.ter[K(a.c,a.r)]);
+  return 1.3*ea.atk*20/(20+ed.def)*multEl(ea.el,ed.el)*fome*atkTer(a.esp,J.ter[K(a.c,a.r)])*(a.elemental?forcaContra(d):1);
 }
 // Golpe Místico: criaturas Arcanas (não os mestres) ignoram até 20% da evasão do terreno do alvo
 const GOLPE_MISTICO=0.20;
@@ -1710,6 +1710,10 @@ function invocar(l,esp,c,r){
 //   executa(l,alvo) → aplica o efeito (alvo = {u, k, destino})
 //   ia(l)           → melhor uso para o Necromancer: {s: pontuação, alvo} ou null
 const CUSTO_FORCA=40;
+// o elemental é feito para derrubar gigantes: contra criaturas pequenas ele rende menos
+// (nível 0: metade do dano; nível 1: 3/4; nível 2, 3 e mestres: dano cheio)
+const FORCA_NIVEL=[.5,.75,1,1];
+const forcaContra=d=>{const e=ESP[d.esp];return e.mestre?1:FORCA_NIVEL[e.tier];};
 const BARREIRA_ACERTO=0.10;
 const quem=l=>OM(l);
 const ehCriatura=u=>u&&!ESP[u.esp].mestre;
@@ -2010,12 +2014,14 @@ async function magiaIA(l){
       if(J.elem[l][el]<35)continue;
       for(const a of alvosForca(l)){
         const e=elementalPara(l,el,a),dano=danoEsperado(e,a,terEv(a))*golpesDe(e)/GOLPES;
-        let s=Math.min(dano,a.hp)+(danoBase(e,a)*0.9>=a.hp&&chanceAcerto(e,a,terEv(a))>=0.6?20:0);
+        const tA=ESP[a.esp].mestre?3:ESP[a.esp].tier;
+        let s=Math.min(dano,a.hp)*(tA>=2?1.4:1)+(tA>0&&danoBase(e,a)*0.9>=a.hp&&chanceAcerto(e,a,terEv(a))>=0.6?20:0);
         if(podeRevidar(a))s-=danoEsperado(a,e,'plan')*CONTRA*0.3;
         if(!best||s>best.s)best={s,el,a};
       }
     }
-    if(best&&best.s>=15&&(J.mp[l]-CUSTO_FORCA>=reserva||best.s>=30)){
+    // limiar 9: vale um bom golpe num nível 2/3 (pontua ×1,4); nível 0 nunca chega lá
+    if(best&&best.s>=9&&(J.mp[l]-CUSTO_FORCA>=reserva||best.s>=30)){
       await focar(best.a.c,best.a.r);await lancarForca(l,best.el,best.a);atualiza();await dorme(250);
     }
   }
@@ -3905,7 +3911,7 @@ function menus(){
     let h=`<div class="tit" style="color:#ffa050">⚡ Força contra ${u?nome(u):'?'}</div><div class="vez">${CUSTO_FORCA} MP · o elemental luta como uma criatura e pode morrer</div><div class="inv">`;
     for(const el of ORDENS[J.ordem[0]].forca){
       const hp=J.elem[0][el],e=u&&elementalPara(0,el,u),ch=u?Math.round(chanceAcerto(e,u,terEv(u))*100):0,mv=u?multEl(el,ESP[u.esp].el):1;
-      h+=`<button onclick="escolheElemental('${el}')" ${hp>0?'':'disabled'}><span><span style="color:${EL[el]}">● ${ESP[ELEMENTAIS[el]].nome}</span><strong>${hp}/100</strong></span><small>${hp>0?`Acerto ${ch}%${mv>1?' · vantagem':mv<1?' · desvantagem':''}`:'Desfeito nesta partida'}</small></button>`;
+      h+=`<button onclick="escolheElemental('${el}')" ${hp>0?'':'disabled'}><span><span style="color:${EL[el]}">● ${ESP[ELEMENTAIS[el]].nome}</span><strong>${hp}/100</strong></span><small>${hp>0?`Acerto ${ch}%${mv>1?' · vantagem':mv<1?' · desvantagem':''}${u&&forcaContra(u)<1?` · dano ×${String(forcaContra(u)).replace('.',',')} (nível ${ESP[u.esp].tier})`:''}`:'Desfeito nesta partida'}</small></button>`;
     }
     h+=`</div><button onclick="J.fz={fase:'alvo'};atualiza()">✕ Voltar</button>`;
     mm.innerHTML=h;mm.style.display='block';posMenu(mm,{c:hc,r:hr});
