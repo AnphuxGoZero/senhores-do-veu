@@ -459,7 +459,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
       <p><b>Terrenos:</b> cada mapa tem um tema (vale, costa, terras áridas, caldeira vulcânica ou fiorde glacial). Passe o mouse num hexágono para ver como ele afeta a criatura selecionada: custo de movimento, evasão e ataque.</p>
       <p>Clique numa unidade sua e depois numa casa azul para movê-la. Inimigos em vermelho podem ser atacados: os de borda contínua estão ao lado; nos tracejados, a criatura anda sozinha até uma casa vizinha e ataca. Todo ataque é corpo a corpo.</p>
       <p>Clique no seu mestre para abrir o menu dele: Mover, Atacar, Magia ou Força.</p>
-      <p><b>Magia:</b> cada mestre tem 9 magias comuns e 2 da sua ordem (escolhida no novo jogo), e lança <b>uma magia por turno</b>, em qualquer momento, desde que tenha MP. Em Magia abre a lista das magias que têm algum alvo agora (Cura só aparece se houver criatura sua ferida, e assim por diante). Escolha uma e clique no alvo destacado em roxo; as que pegam uma área grande mostram a área e pedem confirmação. Esc volta à lista. Mestres nunca são afetados por magias. Marcas no mapa: <b>S</b> Sono, <b>P</b> Petrificada, <b>B</b> Barreira, <b>L</b> Passo Largo, <b>F</b> Fúria, <b>D</b> Dominada.</p>
+      <p><b>Magia:</b> as magias do seu mestre são liberadas quando você conquista a sua primeira torre (o mestre inimigo segue a mesma regra). Cada mestre tem 9 magias comuns e 2 da sua ordem (escolhida no novo jogo), e lança <b>uma magia por turno</b>, em qualquer momento, desde que tenha MP. Em Magia abre a lista das magias que têm algum alvo agora (Cura só aparece se houver criatura sua ferida, e assim por diante). Escolha uma e clique no alvo destacado em roxo; as que pegam uma área grande mostram a área e pedem confirmação. Esc volta à lista. Mestres nunca são afetados por magias. Marcas no mapa: <b>S</b> Sono, <b>P</b> Petrificada, <b>B</b> Barreira, <b>L</b> Passo Largo, <b>F</b> Fúria, <b>D</b> Dominada.</p>
       <p><b>Força:</b> uma vez por turno, por 40 MP, um elemental da sua ordem ataca qualquer criatura inimiga do mapa e enfrenta o revide. Ele começa com 100 de vida, não se cura durante a partida e, se morrer, não volta. A Força não gasta a magia do turno.</p>
       <p>Para invocar, clique numa construção sua (castelo, fortaleza ou torre) que esteja livre e ao lado do seu mestre. Elas ficam com borda dourada tracejada.</p>
       <p>Seu exército pode ter até 2 criaturas + 1 por torre que você controla. Ganhe torres (e MP) terminando o movimento sobre elas.</p>
@@ -1005,7 +1005,7 @@ function gravar(slot){
   const s={v:SAVE_VER,quando:Date.now(),nid,
     ter:J.ter,dono:J.dono,tema:J.tema,turno:J.turno,vez:J.vez,mp:J.mp,deficit:J.deficit,
     logs:J.logs.slice(0,30),avisoCerco:J.avisoCerco||null,ultInvIA:J.ultInvIA||[],
-    invocou:J.invocou||[false,false],ordem:J.ordem,manaBase:J.manaBase,magiaUsada:J.magiaUsada,forcaUsada:J.forcaUsada,elem:J.elem,ciclo:J.ciclo,cicloDir:J.cicloDir,
+    invocou:J.invocou||[false,false],ordem:J.ordem,manaBase:J.manaBase,magiaUsada:J.magiaUsada,forcaUsada:J.forcaUsada,magiaLib:J.magiaLib,elem:J.elem,ciclo:J.ciclo,cicloDir:J.cicloDir,
     un:J.un.map(u=>{const c={...u};delete c.anim;delete c.hit;return c;})};
   try{localStorage.setItem(SAVE_CHAVE+slot,JSON.stringify(s));return true;}catch(e){return false;}
 }
@@ -1019,6 +1019,8 @@ function carregar(slot){
      ...estadoMagiaNovo(s.ordem||['egide','eclipse'],0)};
   // saves de antes das magias não têm estes campos: ficam com os valores de um jogo novo
   if(s.magiaUsada)J.magiaUsada=s.magiaUsada;if(s.forcaUsada)J.forcaUsada=s.forcaUsada;if(s.elem)J.elem=s.elem;
+  // magias liberadas: saves de antes desta regra liberam para quem já tem torre
+  J.magiaLib=s.magiaLib||[0,1].map(l=>torresDe(l)>0);
   J.invocou=s.invocou||[true,true]; // saves antigos: Magia já liberada
   J.ciclo=s.ciclo??(s.turno-1)%CICLO.length;J.cicloDir=s.cicloDir||1;
   nid=Math.max(s.nid,...J.un.map(u=>u.id+1));
@@ -1209,7 +1211,7 @@ async function moverPara(u,k,prev){
   }
   u.movido=true;
   const tomou=captura(u);
-  if(tomou){atualiza();await mostraTorre(u,tomou.antes);} // cena da torre conquistada (o jogo espera ela fechar)
+  if(tomou){atualiza();await mostraTorre(u,tomou.antes,tomou.liberou);} // cena da torre conquistada (o jogo espera ela fechar)
   avisaCerco(u.lado);
 }
 // a vitória só vale se a ocupação aguentar até o início do próximo turno de quem cercou
@@ -1396,14 +1398,15 @@ function fundoTorre(){
   return ctFundo=c;
 }
 let ctTopo=[80,30]; // topo da torre na cena (onde fica o mastro)
-function mostraTorre(u,doDono){
+function mostraTorre(u,doDono,liberou){
   if(!J||J.fim||!VEL||document.hidden)return Promise.resolve();
   const l=u.lado,cor=l===0?'#5aa8ff':'#ff5a4a',corE=l===0?'#2a5aa8':'#a82a20',n=torresDe(l);
   const tomou=doDono!=null&&doDono!==l;
   const frase=l===0
     ?`${ESP[u.esp].nome} ${tomou?`tomou uma torre ${doM(1)}`:'conquistou uma torre'}! Agora você tem ${n} torre${n>1?'s':''}: +${RENDA_TER.torre} MP por turno e exército até ${limite(0)}.`
     :`${ART(1).toUpperCase()} ${NM(1)} ${tomou?'tomou uma torre sua':'conquistou uma torre'}. Agora tem ${n} torre${n>1?'s':''}.`;
-  document.querySelector('#cercoCena .cap').innerHTML=`<div class="ccTropas">${iconeSpr(u.esp,30,l)}</div><div class="ccFrase" style="color:${l===0?'#9fd0ff':'#ff8a80'}">${frase}</div>`;
+  const lib=liberou?`<div class="ccFrase" style="color:#d9b8ff">✦ ${l===0?'Magias liberadas! Seu mestre já pode lançar uma magia por turno.':`${ART(1).toUpperCase()} ${NM(1)} agora pode lançar magias.`}</div>`:'';
+  document.querySelector('#cercoCena .cap').innerHTML=`<div class="ccTropas">${iconeSpr(u.esp,30,l)}</div><div class="ccFrase" style="color:${l===0?'#9fd0ff':'#ff8a80'}">${frase}</div>${lib}`;
   return rodaCena({fundo:fundoTorre(),dur:2300,raio:['#6fa0ff','#ffffff'],clarao:'200,220,255',
     agenda:[{t:80,x:56,y:40},{t:900,x:108,y:44},{t:1600,x:20+Math.random()*120,y:70}],
     baixo:(g,t,now)=>{
@@ -1431,7 +1434,11 @@ function captura(u){
     const antes=J.dono[k];
     J.dono[k]=u.lado;flutua(u,'Torre!',COR[u.lado]);
     log(`${nome(u)} capturou uma torre.`);
-    return {antes};
+    // primeira torre do lado: libera as magias do mestre
+    let liberou=false;
+    if(J.magiaLib&&!J.magiaLib[u.lado]){J.magiaLib[u.lado]=true;liberou=true;
+      log(u.lado===0?'✦ Magias liberadas! Seu mestre já pode lançar uma magia por turno.':`✦ ${OM(1)} agora pode lançar magias.`);}
+    return {antes,liberou};
   }
 }
 const alvosDesde=(u,c,r)=>J.un.filter(e=>e.lado!==u.lado&&d6c(c,r,e.c,e.r)<=ESP[u.esp].alc);
@@ -1593,7 +1600,7 @@ function hexesRaio(c,r,min,max){const o=[];for(let k=0;k<COLS*ROWS;k++){const [a
 const comVizinhos=k=>{const [c,r]=DK(k);return [k,...vizinhos(c,r).map(([a,b])=>K(a,b))];};
 const torreDe=(l,k)=>J.ter[k]==='torre'&&J.dono[k]===l;
 function estadoMagiaNovo(ordem,manaBase){
-  return {ordem,manaBase,magiaUsada:[false,false],forcaUsada:[false,false],
+  return {ordem,manaBase,magiaUsada:[false,false],forcaUsada:[false,false],magiaLib:[false,false],
     elem:[0,1].map(()=>Object.fromEntries(Object.keys(ELEMENTAIS).map(e=>[e,100]))),
     ciclo:0,cicloDir:1,mg:null,fz:null,prevArea:null};
 }
@@ -1786,7 +1793,10 @@ function alvoMagia(l,id,k){
 }
 // magias que aparecem no menu aberto num hexágono: as de alvo único só com um alvo compatível ali
 const magiasPara=(l,k)=>magiasDe(l).filter(id=>alvoMagia(l,id,k));
-const podeMagia=l=>!J.magiaUsada[l]&&!!mestreDe(l);
+// as magias de cada mestre só são liberadas depois que o lado dele conquista a primeira torre
+// (vale para os dois lados): as mecânicas entram aos poucos
+const magiaLiberada=l=>J.magiaLib?!!J.magiaLib[l]:torresDe(l)>0;
+const podeMagia=l=>magiaLiberada(l)&&!J.magiaUsada[l]&&!!mestreDe(l);
 async function lancarMagia(l,id,alvo){
   const m=MAGIAS[id];
   if(!podeMagia(l)||J.mp[l]<m.custo||!magiasDe(l).includes(id))return false;
