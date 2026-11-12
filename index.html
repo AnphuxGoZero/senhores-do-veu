@@ -456,7 +456,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 <div id="cercoCena" title=""><div class="ccCaixa"><div class="ccTela"><canvas class="ccTxt"></canvas></div><div class="cap"></div></div></div>
 <div id="fichaDet" onclick="if(event.target===this)fechaFicha()"><div class="cx"><div class="topoAj"><h2 id="fichaDetTit">Detalhes</h2><button onclick="fechaFicha()" title="Fechar (Esc)">✕</button></div><div id="fichaDetIn"></div></div></div>
 <div id="ajuda" onclick="if(event.target===this)fechaAjuda()"><div class="cx ajuda"><div class="topoAj"><h1>Como jogar</h1><button onclick="fechaAjuda()" title="Fechar (Esc)">✕</button></div>
-      <p><b>Acerto:</b> cada ataque são 3 golpes. A chance de cada golpe acertar é a precisão de quem ataca menos a evasão do terreno de quem defende, mais ou menos 25% pelo horário (mínimo 5%, máximo 95%). Passe o mouse no alvo para ver a conta.</p>
+      <p><b>Acerto:</b> cada ataque são 3 golpes. A chance de cada golpe acertar é a precisão de quem ataca menos a evasão do terreno de quem defende, mais ou menos 25% pelo horário (mínimo 5%, máximo 95%). Castelo e fortaleza só dão evasão ao dono: um invasor neles tem a evasão que teria na planície. Passe o mouse no alvo para ver a conta.</p>
       <p><b>Dia e noite:</b> o tempo avança em ciclo: Manhã (1 rodada) → Dia (2) → Entardecer (1) → Noite (2). <span style="color:#f2d36b">☀ Fogo e Planta</span> ganham precisão de dia; <span style="color:#9fb4ff">☾ Água e Arcano</span>, à noite. No horário oposto, perdem. O efeito é de 10% na Manhã e no Entardecer e de 25% no Dia e na Noite. Terra, Ar e os mestres não mudam.</p>
       <p><b>Movimento:</b> cada monstro tem uma categoria (voadores, terrestres, aquáticos, glaciais ou mestre). A categoria define por onde ele anda e quanta evasão ganha em cada terreno. Os mestres só terminam o movimento em castelo, fortaleza ou torre.</p>
       <p><b>Terrenos:</b> cada mapa tem um tema (vale, costa, terras áridas, caldeira vulcânica ou fiorde glacial). Passe o mouse num hexágono para ver como ele afeta a criatura selecionada: custo de movimento, evasão e ataque.</p>
@@ -654,8 +654,8 @@ const TER={
 };
 // quem tira vantagem de cada terreno (mostrado no painel)
 const TER_DICA={
-  cast:'Sede do mestre. Cura, rende mana e serve para invocar.',
-  fort:'Anexo do castelo, com a mesma evasão. Cura, rende mana e serve para invocar.',
+  cast:'Sede do mestre. Cura, rende mana e serve para invocar. Invasores não ganham a evasão da muralha (contam como planície).',
+  fort:'Anexo do castelo, com a mesma evasão. Cura, rende mana e serve para invocar. Invasores não ganham a evasão da muralha (contam como planície).',
   torre:'Rende mana, cura quem parar nela e aumenta o limite do exército.',
   plan:'Terreno aberto e fácil de cruzar.',
   flor:'Atrasa a marcha, mas dá ótima cobertura. Dríades e família andam livres e defendem melhor.',
@@ -802,12 +802,12 @@ const ESP={
   wizard:{nome:'Wizard',cat:'mago',el:'arcano',hp:110,atk:13,def:5,mov:3,alc:1,forma:'coroa',mestre:true,tier:3},
   sorcerer:{nome:'Sorcerer',cat:'mago',el:'arcano',hp:110,atk:13,def:5,mov:3,alc:1,forma:'coroa',mestre:true,tier:3},
   // estágio 0: formas recém-nascidas, baratas e frágeis, que evoluem rápido (pouca XP)
-  brasa:{nome:'Brasa',cat:'terFogo',el:'fogo',hp:18,atk:8,def:0,mov:4,alc:1,custo:20,xp:15,evo:'faisca',forma:'chama',tier:0},
-  girino:{nome:'Girino',cat:'marPeq',el:'agua',hp:17,atk:5,def:1,mov:4,alc:1,custo:25,xp:15,evo:'gotim',forma:'gota',tier:0},
-  argila:{nome:'Argila',cat:'terPeq',el:'terra',hp:28,atk:6,def:4,mov:2,alc:1,custo:30,xp:18,evo:'cascalho',forma:'pedra',tier:0},
-  semente:{nome:'Semente',cat:'terPeq',el:'planta',hp:26,atk:5,def:2,mov:2,alc:1,custo:20,xp:14,evo:'broto',forma:'folha',tier:0},
-  ovoAlado:{nome:'Ovo Alado',cat:'vooBaixo',el:'ar',hp:13,atk:5,def:1,mov:5,alc:1,custo:25,xp:15,evo:'penugem',forma:'asa',tier:0},
-  essencia:{nome:'Essência',cat:'vooBaixo',el:'arcano',hp:14,atk:8,def:0,mov:3,alc:1,custo:40,xp:18,evo:'olho',forma:'olho',tier:0},
+  brasa:{nome:'Brasa',cat:'terFogo',el:'fogo',hp:18,atk:8,def:0,mov:4,alc:1,custo:20,xp:12,evo:'faisca',forma:'chama',tier:0},
+  girino:{nome:'Girino',cat:'marPeq',el:'agua',hp:17,atk:5,def:1,mov:4,alc:1,custo:25,xp:12,evo:'gotim',forma:'gota',tier:0},
+  argila:{nome:'Argila',cat:'terPeq',el:'terra',hp:28,atk:6,def:4,mov:2,alc:1,custo:30,xp:14,evo:'cascalho',forma:'pedra',tier:0},
+  semente:{nome:'Semente',cat:'terPeq',el:'planta',hp:26,atk:5,def:2,mov:2,alc:1,custo:20,xp:11,evo:'broto',forma:'folha',tier:0},
+  ovoAlado:{nome:'Ovo Alado',cat:'vooBaixo',el:'ar',hp:13,atk:5,def:1,mov:5,alc:1,custo:25,xp:12,evo:'penugem',forma:'asa',tier:0},
+  essencia:{nome:'Essência',cat:'vooBaixo',el:'arcano',hp:14,atk:8,def:0,mov:3,alc:1,custo:40,xp:14,evo:'olho',forma:'olho',tier:0},
   faisca:{nome:'Salamandra',cat:'terFogo',el:'fogo',hp:30,atk:11,def:1,mov:5,alc:1,custo:40,xp:45,evo:'brasador',forma:'chama',tier:1},
   brasador:{nome:'Teiú de Fogo',cat:'terFogo',el:'fogo',hp:48,atk:17,def:3,mov:5,alc:1,xp:90,evo:'pirolorde',forma:'chama',tier:2},
   pirolorde:{nome:'Boitatá',cat:'terFogo',el:'fogo',hp:70,atk:25,def:5,mov:6,alc:1,forma:'chama',tier:3},
@@ -831,7 +831,7 @@ const INVOCAVEIS=['brasa','semente','girino','argila','ovoAlado','essencia'];
 // elementais da Força (ver seção Magia): começam com 100 de vida e não se curam durante a partida
 const ELEMENTAIS={fogo:'elemFogo',agua:'elemAgua',ar:'elemAr',terra:'elemTerra'};
 for(const [el,id] of Object.entries(ELEMENTAIS))
-  ESP[id]={nome:'Elemental de '+{fogo:'Fogo',agua:'Água',ar:'Ar',terra:'Terra'}[el],cat:'elemental',el,hp:100,atk:13,def:4,mov:0,alc:1,forma:'chama',tier:2,elemental:true};
+  ESP[id]={nome:'Elemental de '+{fogo:'Fogo',agua:'Água',ar:'Ar',terra:'Terra'}[el],cat:'elemental',el,hp:100,atk:10,def:4,mov:0,alc:1,forma:'chama',tier:2,elemental:true};
 
 // ---------- Categorias de movimento ----------
 // Cada categoria tem, para os 13 terrenos (na ordem de ORD_TER), o custo de movimento e a defesa (evasão).
@@ -1115,6 +1115,10 @@ const unidadeEm=(c,r)=>J.un.find(u=>u.c===c&&u.r===r);
 const mestreDe=l=>J.un.find(u=>u.lado===l&&ESP[u.esp].mestre);
 const criaturas=l=>J.un.filter(u=>u.lado===l&&!ESP[u.esp].mestre).length;
 const terDe=u=>J.ter[K(u.c,u.r)];
+// terreno que vale para a evasão: castelo e fortaleza do inimigo não protegem o invasor (conta como planície)
+const invasao=(lado,k)=>(J.ter[k]==='cast'||J.ter[k]==='fort')&&J.dono[k]!=null&&J.dono[k]!==lado;
+const terEvK=(lado,k)=>invasao(lado,k)?'plan':J.ter[k];
+const terEv=u=>u.elemental?terDe(u):terEvK(u.lado,K(u.c,u.r));
 const nome=u=>ESP[u.esp].nome+(u.lado===1?' inimigo':'')+(u.dominado!=null?' (dominado)':'');
 function torresDe(l){let n=0;J.ter.forEach((t,k)=>{if(t==='torre'&&J.dono[k]===l)n++;});return n;}
 // ---------- Mana ----------
@@ -1548,7 +1552,7 @@ async function atacar(a,d){
   for(const u of [a,d])await checaEvo(u);
 }
 async function golpear(a,d,mult,contra){
-  const ch=chanceAcerto(a,d,terDe(d)),pg=porGolpe(danoBase(a,d)*mult),n=golpesDe(a);
+  const ch=chanceAcerto(a,d,terEv(d)),pg=porGolpe(danoBase(a,d)*mult),n=golpesDe(a);
   let acertos=0,total=0;
   for(let i=0;i<n&&vivo(d);i++){
     if(Math.random()<ch){
@@ -1929,8 +1933,8 @@ async function magiaIA(l){
     for(const el of elementaisDe(l)){
       if(J.elem[l][el]<35)continue;
       for(const a of alvosForca(l)){
-        const e=elementalPara(l,el,a),dano=danoEsperado(e,a,terDe(a))*golpesDe(e)/GOLPES;
-        let s=Math.min(dano,a.hp)+(danoBase(e,a)*0.9>=a.hp&&chanceAcerto(e,a,terDe(a))>=0.6?20:0);
+        const e=elementalPara(l,el,a),dano=danoEsperado(e,a,terEv(a))*golpesDe(e)/GOLPES;
+        let s=Math.min(dano,a.hp)+(danoBase(e,a)*0.9>=a.hp&&chanceAcerto(e,a,terEv(a))>=0.6?20:0);
         if(podeRevidar(a))s-=danoEsperado(a,e,'plan')*CONTRA*0.3;
         if(!best||s>best.s)best={s,el,a};
       }
@@ -1948,7 +1952,7 @@ function melhorHexAtaque(u,e){
   for(const k of J.alc.dest){
     const [c,r]=DK(k);
     if(d6c(c,r,e.c,e.r)!==1)continue;
-    const s=defTer(u.esp,J.ter[k])*2-J.alc.dist.get(k)*0.01;
+    const s=defTer(u.esp,terEvK(u.lado,k))*2-J.alc.dist.get(k)*0.01;
     if(s>bs){bs=s;best=k;}
   }
   return best;
@@ -2208,7 +2212,7 @@ function ameaca(k,u){
   for(const e of J.un){
     if(e.lado===u.lado)continue;
     const ee=ESP[e.esp];
-    if(d6c(e.c,e.r,c,r)<=ee.mov+ee.alc)s+=danoEsperado(e,u,J.ter[k]);
+    if(d6c(e.c,e.r,c,r)<=ee.mov+ee.alc)s+=danoEsperado(e,u,terEvK(u.lado,k));
   }
   return s;
 }
@@ -2240,13 +2244,13 @@ async function agirIA(u,reservas){
       const d=d6c(c,r,e.c,e.r);if(d>eu.alc)continue;
       const ed=ESP[e.esp];
       // IA pensa no dano esperado; "mata" só se o golpe cheio derruba e a chance de acerto é boa
-      const chA=chanceAcerto(u,e,terDe(e)),dano=danoBase(u,e)*chA,mata=danoBase(u,e)*0.9>=e.hp&&chA>=0.6;
+      const chA=chanceAcerto(u,e,terEv(e)),dano=danoBase(u,e)*chA,mata=danoBase(u,e)*0.9>=e.hp&&chA>=0.6;
       let s=Math.min(dano,e.hp)*(ed.mestre?2.5:1)+(mata?30:0)+(mata&&ed.mestre?10000:0);
       // inimigo ocupando nossa área urbana: prioridade de defesa
       const kE=K(e.c,e.r);
       if((J.ter[kE]==='cast'||J.ter[kE]==='fort')&&J.dono[kE]===u.lado)s+=25+(mata?40:0);
-      if(!mata&&d<=ed.alc)s-=danoEsperado(e,u,J.ter[k])*CONTRA*(ehMestre?3:0.7);
-      s+=defTer(u.esp,J.ter[k])*10;
+      if(!mata&&d<=ed.alc)s-=danoEsperado(e,u,terEvK(u.lado,k))*CONTRA*(ehMestre?3:0.7);
+      s+=defTer(u.esp,terEvK(u.lado,k))*10;
       if(ehMestre)s-=perigo*1.2;
       if(!melhor||s>melhor.s)melhor={s,k,e};
     }
@@ -2286,7 +2290,7 @@ async function agirIA(u,reservas){
   const D=distanciasAte(alvoK,u.esp);
   let bk=K(u.c,u.r),bs=Infinity;
   for(const k of A.dest){
-    let s=(D.get(k)??999)-defTer(u.esp,J.ter[k])*0.5;
+    let s=(D.get(k)??999)-defTer(u.esp,terEvK(u.lado,k))*0.5;
     if(ehMestre)s=s*3+ameaca(k,u)*0.6;
     if(s<bs){bs=s;bk=k;}
   }
@@ -2366,7 +2370,7 @@ function tweenC(ms,f){
 }
 // condições da batalha mostradas nos painéis (as mesmas contas do combate)
 function infoCombate(u,o,mult){
-  return {ch:chanceAcerto(u,o,terDe(o)),fx:faixa(porGolpe(danoBase(u,o)*mult)),n:golpesDe(u),m:multEl(ESP[u.esp].el,ESP[o.esp].el),pode:podeRevidar(u)};
+  return {ch:chanceAcerto(u,o,terEv(o)),fx:faixa(porGolpe(danoBase(u,o)*mult)),n:golpesDe(u),m:multEl(ESP[u.esp].el,ESP[o.esp].el),pode:podeRevidar(u)};
 }
 async function abreCena(a,d,op={}){
   CENA=null;
@@ -3586,8 +3590,8 @@ function terrenoHtml(hv,ref){
   if(ehConstrucao(t))d+=` · ${J.dono[k]==null?'sem dono':J.dono[k]===0?'sua':doM(1)} · +${RENDA_TER[t]} MP/turno`;
   let efeito='';
   if(ref){
-    const cm=custoMov(ref.esp,t),df=defTer(ref.esp,t),at=atkTer(ref.esp,t);
-    efeito=`<div class="vez" title="Efeito do terreno para ${ESP[ref.esp].nome}">${isFinite(cm)?`Movimento <b style="color:var(--txt)">${cm}</b>`:'<b style="color:#ff8a80">Não pode entrar</b>'} · Evasão <b style="color:${df<0?'#ff8a80':'var(--txt)'}">${Math.round(df*100)}%</b>${at!==1?` · Ataque <b style="color:${at>1?'#6ee08a':'#ff8a80'}">${at>1?'+':'−'}${Math.round(Math.abs(at-1)*100)}%</b>`:''}</div>`;
+    const inv=ref.lado!=null&&invasao(ref.lado,k),cm=custoMov(ref.esp,t),df=defTer(ref.esp,inv?'plan':t),at=atkTer(ref.esp,t);
+    efeito=`<div class="vez" title="Efeito do terreno para ${ESP[ref.esp].nome}">${isFinite(cm)?`Movimento <b style="color:var(--txt)">${cm}</b>`:'<b style="color:#ff8a80">Não pode entrar</b>'} · Evasão <b style="color:${df<0?'#ff8a80':'var(--txt)'}">${Math.round(df*100)}%</b>${inv?' <span style="color:#ff8a80">(muralha inimiga não protege)</span>':''}${at!==1?` · Ataque <b style="color:${at>1?'#6ee08a':'#ff8a80'}">${at>1?'+':'−'}${Math.round(Math.abs(at-1)*100)}%</b>`:''}</div>`;
   }
   return `<div class="terr" role="button" tabindex="0" onclick="abreTerreno(${k},${ref&&ref.id!=null?ref.id:-1})" aria-label="Ver explicação: ${TER[t].nome}"><div class="fichaNome"><strong>${TER[t].nome} <span class="ic">ⓘ</span></strong><span class="vez">${d.replace(/^ · /,'')}</span></div>${efeito}</div>`;
 }
@@ -3658,18 +3662,18 @@ function previsao(){
   const hk=J.alvosSet.has(e.id)?K(s.c,s.r):J.alvosMove&&J.alvosMove.get(e.id);
   if(hk==null)return '';
   const [hc,hr]=DK(hk);
-  const ch=chanceAcerto(s,e,terDe(e)),[a,b]=faixa(porGolpe(danoBase(s,e)));
+  const ch=chanceAcerto(s,e,terEv(e)),[a,b]=faixa(porGolpe(danoBase(s,e)));
   const m=multEl(ESP[s.esp].el,ESP[e.esp].el);
   const corCh=c=>c>=0.6?'#6ee08a':c>=0.35?'#e6c34a':'#ff8a80';
   // detalhe da conta: precisão base − evasão ± horário
-  const evT=defTer(e.esp,terDe(e)),evE=evasaoContra(s,e,terDe(e));
+  const evT=defTer(e.esp,terEv(e)),evE=evasaoContra(s,e,terEv(e));
   const conta=`${Math.round(precisao(s.esp)*100)}% − ${Math.round(evE*100)}% evasão${evE!==evT?` (${Math.round(evT*100)}% − 20% Golpe Místico)`:''}${modHora(s.esp)?` ${motivoHora(s.esp)}`:''}`;
   let txt=`Acerto: <strong style="color:${corCh(ch)}">${Math.round(ch*100)}%</strong> <span class="vez">(${conta})</span>`;
   txt+=`<br>${golpesDe(s)} golpes de <strong>${a}–${b}</strong> de dano${m>1?' <span style="color:#6ee08a">(vantagem)</span>':m<1?' <span style="color:#ff8a80">(desvantagem)</span>':''}`;
   if(a*golpesDe(s)>=e.hp)txt+=' · <strong style="color:#f2c14e">pode derrotar o alvo</strong>';
   if(!podeRevidar(e))txt+=`<br>Sem revide (${e.sono?'dormindo':'petrificado'})`;
   else if(d6c(hc,hr,e.c,e.r)<=ESP[e.esp].alc){
-    const chR=chanceAcerto(e,s,J.ter[hk]),[ca,cb]=faixa(porGolpe(danoBase(e,s)*CONTRA));
+    const chR=chanceAcerto(e,s,terEvK(s.lado,hk)),[ca,cb]=faixa(porGolpe(danoBase(e,s)*CONTRA));
     txt+=`<br>Revide: ${Math.round(chR*100)}% de acerto, golpes de ${ca}–${cb}`;
   }else txt+='<br>Sem revide';
   return `<div class="prev">${txt}</div>`;
@@ -3820,7 +3824,7 @@ function menus(){
     const [hc,hr]=DK(J.fz.k),u=unidadeEm(hc,hr);
     let h=`<div class="tit" style="color:#ffa050">⚡ Força contra ${u?nome(u):'?'}</div><div class="vez">${CUSTO_FORCA} MP · o elemental luta como uma criatura e pode morrer</div><div class="inv">`;
     for(const el of ORDENS[J.ordem[0]].forca){
-      const hp=J.elem[0][el],e=u&&elementalPara(0,el,u),ch=u?Math.round(chanceAcerto(e,u,terDe(u))*100):0,mv=u?multEl(el,ESP[u.esp].el):1;
+      const hp=J.elem[0][el],e=u&&elementalPara(0,el,u),ch=u?Math.round(chanceAcerto(e,u,terEv(u))*100):0,mv=u?multEl(el,ESP[u.esp].el):1;
       h+=`<button onclick="escolheElemental('${el}')" ${hp>0?'':'disabled'}><span><span style="color:${EL[el]}">● ${ESP[ELEMENTAIS[el]].nome}</span><strong>${hp}/100</strong></span><small>${hp>0?`Acerto ${ch}%${mv>1?' · vantagem':mv<1?' · desvantagem':''}`:'Desfeito nesta partida'}</small></button>`;
     }
     h+=`</div><button onclick="J.fz={fase:'alvo'};atualiza()">✕ Voltar</button>`;
@@ -3873,7 +3877,7 @@ function menus(){
     }else if(fase==='forca'){
       h+=`<div class="vez" style="margin-top:6px;color:#ffa050">⚡ Força · ${CUSTO_FORCA} MP · uma por turno</div><div class="inv">`;
       for(const el of elementaisDe(0)){
-        const ee=elementalPara(0,el,u),ch=Math.round(chanceAcerto(ee,u,terDe(u))*100),mv=multEl(el,e.el);
+        const ee=elementalPara(0,el,u),ch=Math.round(chanceAcerto(ee,u,terEv(u))*100),mv=multEl(el,e.el);
         h+=`<button onclick="forcaNoAlvo('${el}')" ${J.mp[0]>=CUSTO_FORCA?'':'disabled'}><span><span style="color:${EL[el]}">● ${ESP[ELEMENTAIS[el]].nome}</span><strong>${J.elem[0][el]}/100</strong></span><small>Acerto ${ch}%${mv>1?' · vantagem':mv<1?' · desvantagem':''}</small></button>`;
       }
       h+=`</div>${volta}`;
