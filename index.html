@@ -288,6 +288,16 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 .fichaFoto{position:relative;padding:0!important;min-height:0!important;border:1px solid #4a5268;border-radius:7px;background:#14161c;line-height:0;flex:none}
 .fichaFoto .spr{margin:0;border-radius:6px}
 .fichaFoto .ic{position:absolute;right:-5px;bottom:-5px;line-height:14px;font-size:11px;width:15px;height:15px;border-radius:50%;background:#2f5d8f;color:#fff;display:grid;place-items:center}
+/* cena do cerco: quadro em pixel art no meio da tela; tocar fecha */
+#cercoCena{position:fixed;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;background:#000b;opacity:0;pointer-events:none;transition:opacity .25s}
+#cercoCena.aberto{opacity:1;pointer-events:auto;cursor:pointer}
+#cercoCena .ccCaixa{display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 6px 10px;background:#0b1530;border:3px solid #6a95d6;border-radius:4px;
+  box-shadow:0 0 0 3px #162a5a,0 0 40px #c04a9888,0 10px 40px #000;transform:scale(.92);transition:transform .25s;max-width:94vw}
+#cercoCena.aberto .ccCaixa{transform:scale(1)}
+#cercoCena canvas{display:block;image-rendering:pixelated;border:2px solid #162a5a}
+#cercoCena .ccTropas{display:flex;justify-content:center;gap:4px}
+#cercoCena .ccTropas .spr{margin:0}
+#cercoCena .ccFrase{font-size:14px;font-weight:600;text-align:center;padding:0 8px;max-width:480px;text-shadow:0 1px 2px #000}
 #fichaDet{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:7;padding:8px}
 #fichaDet.aberto{display:flex}
 #fichaDet>.cx{width:min(420px,100%);max-height:85vh;max-height:85dvh;overflow:auto;font-size:12.5px;box-shadow:0 10px 40px #000c}
@@ -440,6 +450,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
+<div id="cercoCena" title=""><div class="ccCaixa"><canvas width="160" height="108"></canvas><div class="cap"></div></div></div>
 <div id="fichaDet" onclick="if(event.target===this)fechaFicha()"><div class="cx"><div class="topoAj"><h2 id="fichaDetTit">Detalhes</h2><button onclick="fechaFicha()" title="Fechar (Esc)">✕</button></div><div id="fichaDetIn"></div></div></div>
 <div id="ajuda" onclick="if(event.target===this)fechaAjuda()"><div class="cx ajuda"><div class="topoAj"><h1>Como jogar</h1><button onclick="fechaAjuda()" title="Fechar (Esc)">✕</button></div>
       <p><b>Acerto:</b> cada ataque são 3 golpes. A chance de cada golpe acertar é a precisão de quem ataca menos a evasão do terreno de quem defende, mais ou menos 25% pelo horário (mínimo 5%, máximo 95%). Passe o mouse no alvo para ver a conta.</p>
@@ -1197,7 +1208,8 @@ async function moverPara(u,k,prev){
     u.anim=null;
   }
   u.movido=true;
-  captura(u);
+  const tomou=captura(u);
+  if(tomou){atualiza();await mostraTorre(u,tomou.antes);} // cena da torre conquistada (o jogo espera ela fechar)
   avisaCerco(u.lado);
 }
 // a vitória só vale se a ocupação aguentar até o início do próximo turno de quem cercou
@@ -1218,6 +1230,192 @@ function cerco(l){ // quantas casas urbanas do adversário de l estão ocupadas 
   const n=urb.filter(k=>{const u=unidadeEm(...DK(k));return u&&u.lado===l&&!ESP[u.esp].mestre;}).length;
   return {n,total:urb.length,precisa:Math.floor(urb.length/2)+1};
 }
+// ---------- Cena do cerco ----------
+// Ao fim do turno de quem tem criaturas na área urbana do adversário: castelo sob tempestade, raios,
+// "CERCO" e o placar (casas ocupadas / necessárias). Só aparece quando o número muda, para não cansar.
+// Pixel art gerada por código numa tela de 160×108, ampliada em múltiplo inteiro (pixels nítidos).
+const CC_W=160,CC_H=108;
+let ccFundo=null,cenaCerco=null; // cenaCerco: a cena aberta agora ({fecha}), para tocar/Esc fecharem
+function fundoCerco(){
+  if(ccFundo)return ccFundo;
+  const c=document.createElement('canvas');c.width=CC_W;c.height=CC_H;const g=c.getContext('2d');
+  const rnd=mulberry32(7331),px=(x,y,cor)=>{g.fillStyle=cor;g.fillRect(x,y,1,1);};
+  // céu: nuvens roxas em faixas, com pontilhado entre os tons
+  const CEU=['#1a0522','#330a3a','#521152','#741c68','#9a2f80','#c04a98'];
+  const ruido=(x,y)=>{const v=Math.sin(x*.21+Math.sin(y*.33)*2.1)*Math.cos(y*.27-x*.05)+Math.sin((x+y)*.11)*.6;return v;};
+  for(let y=0;y<90;y++)for(let x=0;x<CC_W;x++){
+    let v=(ruido(x,y)+1.6)/3.2*(1-y/140)*CEU.length;v+=((x+y)&1)?.35:-.35;
+    px(x,y,CEU[Math.max(0,Math.min(CEU.length-1,Math.floor(v)))]);
+  }
+  // castelo em azul: luz à esquerda, sombra à direita, fiadas de tijolo
+  const AZ=['#0b1530','#162a5a','#223f80','#30569f','#4672bd','#6a95d6'];
+  const bloco=(x0,y0,x1,y1,claro=0)=>{
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+      const f=(x-x0)/(x1-x0);let i=(f<.3?4:f<.7?3:2)+claro;
+      if((y-y0)%4===0)i--;else if((x+(((y-y0)>>2)&1)*3)%6===0)i--;
+      if(rnd()<.06)i--;
+      if(x===x0)i=5;if(x===x1-1)i=0;
+      px(x,y,AZ[Math.max(0,Math.min(5,i))]);
+    }
+  };
+  const ameias=(x0,x1,y)=>{for(let x=x0;x<x1;x+=4){g.fillStyle=AZ[3];g.fillRect(x,y-3,2,3);g.fillStyle=AZ[1];g.fillRect(x+1,y-3,1,3);}};
+  const janela=(x,y,h=3)=>{g.fillStyle='#050a18';g.fillRect(x,y,1,h);};
+  const torre=(x0,x1,topo,base,claro=0)=>{bloco(x0,topo,x1,base,claro);bloco(x0-1,topo,x1+1,topo+3,claro+1);ameias(x0-1,x1+1,topo);
+    for(let y=topo+8;y<base-6;y+=11)janela(Math.round((x0+x1)/2),y);};
+  // muralha externa (fundo), torres laterais, muralha do meio, torre de menagem e torres do portão
+  bloco(0,60,CC_W,90,-1);ameias(0,CC_W,60);
+  torre(6,28,22,90);torre(132,154,22,90);
+  bloco(36,44,124,90);ameias(36,124,44);
+  for(let x=44;x<120;x+=9)janela(x,52);
+  torre(64,96,8,90,1);
+  for(let x=70;x<92;x+=7)janela(x,20,4);
+  torre(54,68,64,90,1);torre(92,106,64,90,1);
+  bloco(68,70,92,90,0);ameias(68,92,70);
+  // portão
+  g.fillStyle='#2a160c';g.fillRect(75,76,10,14);g.fillStyle='#4a2a16';g.fillRect(76,77,8,13);
+  g.fillStyle='#1a0c06';for(let x=78;x<84;x+=2)g.fillRect(x,77,1,13);g.fillRect(75,75,10,1);
+  // chão do acampamento
+  for(let y=88;y<CC_H;y++)for(let x=0;x<CC_W;x++)px(x,y,((x*7+y*3)%11===0||rnd()<.08)?'#2a2118':(y<92?'#1c1712':'#15110d'));
+  // tendas
+  const tenda=(x,y,w)=>{for(let i=0;i<w;i++){const h=Math.floor(i<w/2?i*1.1:(w-i)*1.1);g.fillStyle=i<w/2?'#7a7448':'#4f4a2c';g.fillRect(x+i,y-h,1,h);}g.fillStyle='#1a1408';g.fillRect(x+Math.floor(w/2),y-2,1,2);};
+  [[22,100,9],[34,97,7],[50,102,10],[96,101,9],[108,97,7],[136,100,10],[148,104,9],[64,104,7],[120,105,8],[6,106,8]].forEach(t=>tenda(...t));
+  // torre de cerco de madeira, à esquerda
+  for(let y=66;y<104;y++)for(let x=2;x<16;x++)px(x,y,(y%5===0)?'#3a2410':(x===2?'#c48a4a':x>12?'#5a3a1a':'#8a5a2a'));
+  for(let x=2;x<16;x+=3){g.fillStyle='#8a5a2a';g.fillRect(x,63,2,3);}
+  g.fillStyle='#2a180a';g.fillRect(3,104,3,3);g.fillRect(12,104,3,3);
+  // soldados: pontinhos com elmo
+  for(let i=0;i<14;i++){const x=20+Math.floor(rnd()*120),y=94+Math.floor(rnd()*12);g.fillStyle='#9aa0a8';g.fillRect(x,y,1,1);g.fillStyle='#5a3a2a';g.fillRect(x,y+1,1,2);}
+  return ccFundo=c;
+}
+// raio: zigue-zague do alto até (x1,y1), com galhos
+function raioCerco(x1,y1){
+  const pts=[[x1+(Math.random()-.5)*40,0]],n=9;
+  for(let i=1;i<=n;i++){const t=i/n;pts.push([pts[0][0]+(x1-pts[0][0])*t+(i<n?(Math.random()-.5)*12:0),y1*t]);}
+  const galhos=[];for(let i=2;i<n-1;i++)if(Math.random()<.35){const [x,y]=pts[i];const d=Math.random()<.5?-1:1;galhos.push([[x,y],[x+d*(6+Math.random()*8),y+5+Math.random()*6],[x+d*(10+Math.random()*10),y+12+Math.random()*6]]);}
+  return {pts,galhos};
+}
+function mostraCerco(l){
+  if(!J||J.fim)return Promise.resolve();
+  const c=cerco(l);
+  J.cercoVisto=J.cercoVisto||[0,0];
+  if(!c.total||c.n===0){J.cercoVisto[l]=0;return Promise.resolve();}
+  if(c.n===J.cercoVisto[l])return Promise.resolve();
+  J.cercoVisto[l]=c.n;
+  if(!VEL||document.hidden)return Promise.resolve();
+  const el=document.getElementById('cercoCena');
+  const occ=urbanaDe(1-l).map(k=>unidadeEm(...DK(k))).filter(u=>u&&u.lado===l&&!ESP[u.esp].mestre);
+  const vence=c.n>=c.precisa;
+  const frase=l===0
+    ?(vence?`Você domina o castelo ${doM(1)}. Segure até o seu próximo turno para vencer!`:`Suas tropas cercam o castelo ${doM(1)}.`)
+    :(vence?`${ART(1).toUpperCase()} ${NM(1)} domina o seu castelo. Expulse as tropas neste turno ou perderá!`:`${ART(1).toUpperCase()} ${NM(1)} cerca o seu castelo!`);
+  el.querySelector('.cap').innerHTML=`<div class="ccTropas">${occ.map(u=>iconeSpr(u.esp,30,u.lado)).join('')}</div><div class="ccFrase" style="color:${l===0?'#9fd0ff':'#ff8a80'}">${frase}</div>`;
+  return rodaCena({fundo:fundoCerco(),dur:3000,
+    // raios: nas torres laterais e na torre de menagem
+    agenda:[{t:120,x:17,y:22},{t:650,x:143,y:22},{t:1500,x:80,y:8},{t:2150,x:17+Math.random()*126,y:30}],
+    baixo:(g,t,now)=>{ // fogueiras tremulando
+      for(const [fx,fy] of [[42,99],[124,101],[88,104]]){
+        g.fillStyle='#3a2410';g.fillRect(fx-2,fy,5,1);
+        const s=Math.floor(now/90+fx);for(let i=-1;i<=1;i++){const h=2+((s*(i+3)*7)%4);g.fillStyle='#ff8a20';g.fillRect(fx+i,fy-h,1,h);g.fillStyle='#ffe070';g.fillRect(fx+i,fy-Math.max(1,h-2),1,Math.max(1,h-2));}
+        g.fillStyle='rgba(255,140,40,.18)';g.fillRect(fx-5,fy-6,11,8);
+      }},
+    cima:(g,t)=>{
+      textoCena(g,'CERCO',46,30,'#e8453c','#1a0408',t,120); // cai do alto junto com o primeiro raio
+      textoCena(g,`${c.n}/${c.precisa}`,72,17,vence?'#ff6b5a':'#f2c14e','#1a0e02',t,650); // casas ocupadas / necessárias
+    }});
+}
+// texto grande da cena: cai encolhendo a partir do instante t0
+function textoCena(g,txt,y,tam,cor,contorno,t,t0){
+  if(t<t0)return;
+  const p=Math.min(1,(t-t0)/260),s=1+(1-p)*.8;
+  g.save();g.translate(CC_W/2,y);g.scale(s,s);g.globalAlpha=p;
+  g.font=`bold ${tam}px Impact,"Arial Black",sans-serif`;g.textAlign='center';g.textBaseline='middle';
+  g.lineJoin='round';g.lineWidth=Math.max(4,tam/6);g.strokeStyle=contorno;g.strokeText(txt,0,0);
+  g.fillStyle=cor;g.fillText(txt,0,0);g.fillStyle='rgba(255,255,255,.28)';g.fillText(txt,0,-tam*.04);g.fillStyle=cor;g.fillText(txt,0,tam*.01);
+  g.restore();
+}
+// motor comum das cenas (cerco, torre): quadro em pixel art no meio da tela, raios com clarão; tocar/Esc fecham
+// o: {fundo, dur, agenda:[{t,x,y}], baixo(g,t,now) depois do fundo, cima(g,t,now) por cima de tudo, raio:[cor de fora, de dentro], clarao:'r,g,b'}
+function rodaCena(o){
+  const el=document.getElementById('cercoCena'),cv2=el.querySelector('canvas'),g=cv2.getContext('2d');
+  const esc=Math.max(2,Math.min(4,Math.floor(Math.min(innerWidth*.9,520)/CC_W)));
+  cv2.style.width=CC_W*esc+'px';cv2.style.height=CC_H*esc+'px';
+  const [corFora,corDentro]=o.raio||['#e070ff','#ffffff'],clarao=o.clarao||'255,215,255';
+  const t0=performance.now();
+  let ativos=[],flash=0,prox=0;
+  el.classList.add('aberto');
+  return new Promise(fim=>{
+    let acabou=false;
+    const fecha=()=>{if(acabou)return;acabou=true;el.classList.remove('aberto');el.onclick=null;cenaCerco=null;setTimeout(fim,250);};
+    el.onclick=fecha;cenaCerco={fecha};
+    setTimeout(fecha,o.dur+600); // garantia: com a aba em segundo plano a animação pausa, e o jogo não pode ficar esperando
+    const quadro=now=>{
+      if(acabou)return;
+      const t=now-t0;if(t>o.dur){fecha();return;}
+      while(prox<o.agenda.length&&t>=o.agenda[prox].t){const a=o.agenda[prox++];ativos.push({...raioCerco(a.x,a.y),t:t});flash=1;}
+      g.drawImage(o.fundo,0,0);
+      o.baixo&&o.baixo(g,t,now);
+      if(flash>0){g.fillStyle=`rgba(${clarao},${flash*.55})`;g.fillRect(0,0,CC_W,CC_H);flash=Math.max(0,flash-.09);}
+      // raios: piscam e somem em ~280 ms
+      ativos=ativos.filter(r=>t-r.t<280);
+      for(const r of ativos){
+        const a=(t-r.t)<60||((t-r.t)>120&&(t-r.t)<170)?1:.45;
+        const linha=(p,cor,w)=>{g.strokeStyle=cor;g.lineWidth=w;g.beginPath();p.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.stroke();};
+        g.globalAlpha=a;linha(r.pts,corFora,3);r.galhos.forEach(b=>linha(b,corFora,2));
+        linha(r.pts,corDentro,1);r.galhos.forEach(b=>linha(b,corDentro,1));g.globalAlpha=1;
+      }
+      o.cima&&o.cima(g,t,now);
+      requestAnimationFrame(quadro);
+    };
+    requestAnimationFrame(quadro);
+  });
+}
+// ---------- Cena da torre conquistada ----------
+// Noite azul, colinas, a torre do jogo (a mesma pixel art do mapa) no meio; a bandeira do time sobe enquanto os raios caem.
+let ctFundo=null;
+function fundoTorre(){
+  if(ctFundo)return ctFundo;
+  const c=document.createElement('canvas');c.width=CC_W;c.height=CC_H;const g=c.getContext('2d');
+  const rnd=mulberry32(4242),px=(x,y,cor)=>{g.fillStyle=cor;g.fillRect(x,y,1,1);};
+  const CEU=['#04061a','#0a1036','#121c52','#1c2c70','#2a4090','#3c58ad'];
+  for(let y=0;y<CC_H;y++)for(let x=0;x<CC_W;x++){
+    let v=(Math.sin(x*.16+Math.sin(y*.21)*2.4)*Math.cos(y*.19+x*.04)+Math.sin((x-y)*.09)*.7+1.7)/3.4*(.4+y/120)*CEU.length;
+    v+=((x+y)&1)?.35:-.35;px(x,y,CEU[Math.max(0,Math.min(CEU.length-1,Math.floor(v)))]);
+  }
+  for(let i=0;i<30;i++)px(Math.floor(rnd()*CC_W),Math.floor(rnd()*50),rnd()<.3?'#ffffff':'#8fa8e0'); // estrelas
+  // colinas: duas camadas, a de trás mais escura
+  const colina=(base,amp,fr,f,cores)=>{for(let x=0;x<CC_W;x++){const h=Math.round(base-amp*Math.sin(x*fr+f)-amp*.5*Math.sin(x*fr*2.7+f*2));for(let y=h;y<CC_H;y++)px(x,y,cores[((x*3+y*5)%7===0||rnd()<.07)?1:0]);px(x,h,cores[2]);}};
+  colina(84,6,.045,1,['#101a2a','#0a1220','#1e3048']);
+  colina(98,4,.07,3,['#18241a','#101a12','#2c4430']);
+  // a torre do mapa, ampliada em múltiplo inteiro até ~68 px de altura, em pé sobre a colina; o mastro sai do topo dela
+  const ico=iconePx(estiloIcone('torre'),'torre'),d=ico.getContext('2d').getImageData(0,0,ico.width,ico.height).data;
+  let x0=99,x1=-1,y0=99,y1=-1;
+  for(let y=0;y<ico.height;y++)for(let x=0;x<ico.width;x++)if(d[(y*ico.width+x)*4+3]>0){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
+  const s=Math.max(2,Math.min(4,Math.round(72/(y1-y0+1)))),w=(x1-x0+1)*s,h=(y1-y0+1)*s,dx=Math.round(CC_W/2-w/2),dy=100-h;
+  g.imageSmoothingEnabled=false;g.drawImage(ico,x0,y0,x1-x0+1,y1-y0+1,dx,dy,w,h);
+  ctTopo=[Math.round(CC_W/2),dy];
+  return ctFundo=c;
+}
+let ctTopo=[80,30]; // topo da torre na cena (onde fica o mastro)
+function mostraTorre(u,doDono){
+  if(!J||J.fim||!VEL||document.hidden)return Promise.resolve();
+  const l=u.lado,cor=l===0?'#5aa8ff':'#ff5a4a',corE=l===0?'#2a5aa8':'#a82a20',n=torresDe(l);
+  const tomou=doDono!=null&&doDono!==l;
+  const frase=l===0
+    ?`${ESP[u.esp].nome} ${tomou?`tomou uma torre ${doM(1)}`:'conquistou uma torre'}! Agora você tem ${n} torre${n>1?'s':''}: +${RENDA_TER.torre} MP por turno e exército até ${limite(0)}.`
+    :`${ART(1).toUpperCase()} ${NM(1)} ${tomou?'tomou uma torre sua':'conquistou uma torre'}. Agora tem ${n} torre${n>1?'s':''}.`;
+  document.querySelector('#cercoCena .cap').innerHTML=`<div class="ccTropas">${iconeSpr(u.esp,30,l)}</div><div class="ccFrase" style="color:${l===0?'#9fd0ff':'#ff8a80'}">${frase}</div>`;
+  return rodaCena({fundo:fundoTorre(),dur:2300,raio:['#6fa0ff','#ffffff'],clarao:'200,220,255',
+    agenda:[{t:80,x:56,y:40},{t:900,x:108,y:44},{t:1600,x:20+Math.random()*120,y:70}],
+    baixo:(g,t,now)=>{
+      // mastro no alto da torre e a bandeira subindo (300→900 ms), tremulando
+      const mx=ctTopo[0],base=ctTopo[1]+1,topo=Math.max(3,base-22);
+      g.fillStyle='#d8d0b8';g.fillRect(mx,topo,1,base-topo);g.fillStyle='#f2c14e';g.fillRect(mx-1,topo-1,3,1);
+      const p=Math.min(1,Math.max(0,(t-300)/600)),by=Math.round(base-8-(base-8-topo)*p);
+      for(let x=1;x<=12;x++){const o=Math.round(Math.sin(now/110-x*.7)*1.2*(x/12));
+        g.fillStyle=x%4===0?corE:cor;g.fillRect(mx+x,by+o,1,7);g.fillStyle=corE;g.fillRect(mx+x,by+o+6,1,1);}
+    },
+    cima:(g,t)=>textoCena(g,'TORRE!',90,24,cor,'#05081a',t,80)});
+}
 function checaCerco(l){
   if(J.fim)return;
   const c=cerco(l);
@@ -1226,11 +1424,14 @@ function checaCerco(l){
     fimDeJogo(l,'cerco');
   }
 }
+// devolve o dono anterior (null = neutra) quando a torre muda de mãos; undefined se nada mudou
 function captura(u){
   const k=K(u.c,u.r);
   if(J.ter[k]==='torre'&&J.dono[k]!==u.lado){
+    const antes=J.dono[k];
     J.dono[k]=u.lado;flutua(u,'Torre!',COR[u.lado]);
     log(`${nome(u)} capturou uma torre.`);
+    return {antes};
   }
 }
 const alvosDesde=(u,c,r)=>J.un.filter(e=>e.lado!==u.lado&&d6c(c,r,e.c,e.r)<=ESP[u.esp].alc);
@@ -1925,12 +2126,15 @@ async function fimTurno(){
   if(J.vez!==0||J.ocupado||J.fim)return;
   desseleciona();J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=null;J.mg=null;J.fz=null;J.prevArea=null;J.menuAlvo=null;
   fimDeTurno(0);
+  // terminou o turno com tropas no castelo inimigo: cena do CERCO (o jogo espera ela fechar)
+  J.ocupado=true;atualiza();await mostraCerco(0);J.ocupado=false;
   J.vez=1;inicioTurno(1);atualiza();
   if(J.fim)return;
   await dorme(350);
   await turnoIA();
   if(J.fim)return;
   fimDeTurno(1);
+  J.ocupado=true;await mostraCerco(1);J.ocupado=false;
   const antes=faseIdx();
   J.vez=0;J.turno++;avancaCiclo();anunciaFase(antes);inicioTurno(0);atualiza();
 }
@@ -3761,6 +3965,7 @@ cv.addEventListener('wheel',ev=>{ev.preventDefault();mudaZoom(ev.deltaY<0?1:-1);
 cv.addEventListener('contextmenu',ev=>{ev.preventDefault();if(ultTipo==='mouse')cancelar();});
 addEventListener('keydown',ev=>{
   if(CENA&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();toqueCena();return;}
+  if(cenaCerco&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();cenaCerco.fecha();return;}
   if(ev.key==='Escape'){if(document.getElementById('ajuda').classList.contains('aberto')){fechaAjuda();return;}if(fichaAberta!=null){fechaFicha();return;}cancelar();}
   const P={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[ev.key];
   if(P){ev.preventDefault();CAM.x+=P[0]*50/CAM.z;CAM.y+=P[1]*50/CAM.z;CAM.mao=true;limitaCam();}
