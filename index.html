@@ -473,7 +473,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
         <li><b>Brasa:</b> evolui em pleno Dia → Salamandra; na Manhã, no Entardecer ou à Noite → Diabrete.</li>
         <li><b>Girino:</b> evolui com mais da metade da vida → Boto Rosa; ferido (metade ou menos) → Cavalo Marinho.</li>
         <li><b>Argila:</b> apanhou mais do que bateu no estágio → Troll; bateu mais do que apanhou → Homem Lagarto.</li>
-        <li><b>Semente:</b> turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote.</li>
+        <li><b>Semente:</b> turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote da Selva.</li>
         <li><b>Gato Alado:</b> turnos terminados numa construção sua contam para o Grifo; cada torre capturada vale 3 para o Anzu.</li>
         <li><b>Essência:</b> derrubou algum inimigo no estágio → Espada; não derrubou ninguém → Cumacanga.</li>
       </ul>
@@ -845,7 +845,7 @@ const ESP={
   homemLagarto:{nome:'Homem Lagarto',cat:'terAreia',el:'terra',hp:38,atk:12,def:4,mov:4,alc:1,custo:60,xp:50,evo:'lagartoDuplo',forma:'pedra',tier:1},
   lagartoDuplo:{nome:'Lagarto de Duas Cabeças',cat:'terAreia',el:'terra',hp:60,atk:17,def:6,mov:4,alc:1,xp:95,evo:'hidra',forma:'pedra',tier:2},
   hidra:{nome:'Hidra',cat:'terGra',el:'terra',hp:92,atk:24,def:9,mov:3,alc:1,forma:'pedra',tier:3},
-  filhote:{nome:'Filhote',cat:'terPeq',el:'planta',hp:32,atk:9,def:2,mov:5,alc:1,custo:40,xp:40,evo:'unicornio',forma:'folha',tier:1},
+  filhote:{nome:'Filhote da Selva',cat:'terPeq',el:'planta',hp:32,atk:9,def:2,mov:5,alc:1,custo:40,xp:40,evo:'unicornio',forma:'folha',tier:1},
   unicornio:{nome:'Unicórnio',cat:'terPeq',el:'planta',hp:52,atk:14,def:4,mov:6,alc:1,xp:85,evo:'pegasus',forma:'folha',tier:2},
   pegasus:{nome:'Pegasus',cat:'voo',el:'planta',hp:72,atk:19,def:5,mov:7,alc:1,forma:'folha',tier:3},
   anzu:{nome:'Anzu',cat:'voo',el:'ar',hp:30,atk:17,def:1,mov:7,alc:1,xp:90,evo:'quimera',forma:'asa',tier:2},
@@ -868,7 +868,7 @@ const RAMOS={
     pontos:u=>u.hp>ESP[u.esp].hp/2?[1,0]:[0,1]},
   argila:{para:['cascalho','homemLagarto'],dica:'Apanhou mais do que bateu neste estágio → Troll; bateu mais do que apanhou → Homem Lagarto.',
     pontos:u=>[hist(u).sofrido||0,hist(u).feito||0]},
-  semente:{para:['broto','filhote'],dica:'Turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote.',
+  semente:{para:['broto','filhote'],dica:'Turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote da Selva.',
     pontos:u=>[hist(u).parado+turnosEm(u,'flor'),hist(u).correu+turnosEm(u,'plan')]},
   // Grifo, o guardião: cada turno terminado numa construção sua; Anzu, o ladrão: cada torre capturada vale 3
   penugem:{para:['gaviao','anzu'],dica:'Cada turno terminado numa construção sua (torre, fortaleza, castelo) conta para o Grifo; cada torre capturada vale 3 para o Anzu.',
