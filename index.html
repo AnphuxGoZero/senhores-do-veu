@@ -470,12 +470,12 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
       <p><b>Dicas:</b> use Gatos Alados, rápidos e voadores, para tomar torres neutras logo no início. Não deixe criaturas paradas à toa, porque elas custam manutenção. Tomar torres do mestre inimigo corta a renda dele e o limite do exército.</p>
       <p>Criaturas ganham XP lutando e evoluem: nascem no estágio 0 (baratas e frágeis, evoluem com pouca XP) e passam pelos estágios 1, 2 e 3. Algumas linhas se dividem em dois ramos, conforme o que a criatura viveu no estágio (a ficha mostra a tendência; em empate, é sorteio):</p>
       <ul>
-        <li><b>Brasa:</b> evolui de Manhã ou de Dia → Salamandra; no Entardecer ou à Noite → Diabrete.</li>
-        <li><b>Girino:</b> mais turnos terminados em rio → Boto Rosa; em mar → Cavalo Marinho.</li>
-        <li><b>Argila:</b> mais turnos em montanha ou pedreira → Troll; em pântano ou deserto → Homem Lagarto.</li>
+        <li><b>Brasa:</b> evolui em pleno Dia → Salamandra; na Manhã, no Entardecer ou à Noite → Diabrete.</li>
+        <li><b>Girino:</b> evolui com mais da metade da vida → Boto Rosa; ferido (metade ou menos) → Cavalo Marinho.</li>
+        <li><b>Argila:</b> apanhou mais do que bateu no estágio → Troll; bateu mais do que apanhou → Homem Lagarto.</li>
         <li><b>Semente:</b> turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote.</li>
-        <li><b>Gato Alado:</b> capturou torre no estágio → Anzu; evoluir perto do mestre ou no próprio castelo → Grifo.</li>
-        <li><b>Essência:</b> evoluir ao lado do mestre → Espada; longe dele → Cumacanga.</li>
+        <li><b>Gato Alado:</b> turnos terminados numa construção sua contam para o Grifo; cada torre capturada vale 3 para o Anzu.</li>
+        <li><b>Essência:</b> derrubou algum inimigo no estágio → Espada; não derrubou ninguém → Cumacanga.</li>
       </ul>
       <p>Há duas formas de vencer: derrotar o mestre inimigo, ou ocupar com suas criaturas mais da metade da área urbana dele (4 das 7 casas entre castelo e fortalezas) e segurar até o início do seu próximo turno. Casas da sua área ocupadas pelo inimigo piscam em laranja.</p>
       <p><b>Elementos</b> (vantagem = ×1,5 de dano; desvantagem = ×0,75):</p>
@@ -841,7 +841,7 @@ const ESP={
   lordeDemonio:{nome:'Lorde Demônio',cat:'vooFogo',el:'fogo',hp:62,atk:28,def:4,mov:6,alc:1,forma:'chama',tier:3},
   cavaloMarinho:{nome:'Cavalo Marinho',cat:'marPeq',el:'agua',hp:30,atk:7,def:2,mov:4,alc:1,custo:50,xp:45,evo:'polvo',forma:'gota',tier:1},
   polvo:{nome:'Polvo',cat:'marPeq',el:'agua',hp:50,atk:12,def:4,mov:4,alc:1,xp:90,evo:'kraken',forma:'gota',tier:2},
-  kraken:{nome:'Kraken',cat:'marGra',el:'agua',hp:78,atk:18,def:6,mov:4,alc:1,forma:'gota',tier:3},
+  kraken:{nome:'Kraken',cat:'marPeq',el:'agua',hp:78,atk:18,def:6,mov:4,alc:1,forma:'gota',tier:3},
   homemLagarto:{nome:'Homem Lagarto',cat:'terAreia',el:'terra',hp:38,atk:12,def:4,mov:4,alc:1,custo:60,xp:50,evo:'lagartoDuplo',forma:'pedra',tier:1},
   lagartoDuplo:{nome:'Lagarto de Duas Cabeças',cat:'terAreia',el:'terra',hp:60,atk:17,def:6,mov:4,alc:1,xp:95,evo:'hidra',forma:'pedra',tier:2},
   hidra:{nome:'Hidra',cat:'terGra',el:'terra',hp:92,atk:24,def:9,mov:3,alc:1,forma:'pedra',tier:3},
@@ -861,26 +861,25 @@ function spr(esp){return (ESP[esp]&&ESP[esp].arte)||esp;}
 // no estágio atual (u.h: terrenos onde terminou turnos, passos, torres) ou pela situação na hora de evoluir.
 // Quem tiver mais pontos vence; empate (inclusive 0 a 0) é sorteado.
 const RAMOS={
-  brasa:{para:['faisca','diabrete'],dica:'Evoluir de Manhã ou de Dia → Salamandra; no Entardecer ou à Noite → Diabrete.',
-    pontos:u=>faseAtual().diurno?[1,0]:[0,1]},
-  girino:{para:['gotim','cavaloMarinho'],dica:'Terminar mais turnos em rio → Boto Rosa; em mar → Cavalo Marinho.',
-    pontos:u=>[turnosEm(u,'rio'),turnosEm(u,'mar')]},
-  argila:{para:['cascalho','homemLagarto'],dica:'Terminar mais turnos em montanha ou pedreira → Troll; em pântano ou deserto → Homem Lagarto.',
-    pontos:u=>[turnosEm(u,'mont','pedr'),turnosEm(u,'pant','dese')]},
+  // só o Dia pleno: o Fogo luta (e evolui) mais de dia, então Manhã, Entardecer e Noite ficam com o Diabrete
+  brasa:{para:['faisca','diabrete'],dica:'Evoluir em pleno Dia → Salamandra; na Manhã, no Entardecer ou à Noite → Diabrete.',
+    pontos:u=>faseAtual().nome==='Dia'?[1,0]:[0,1]},
+  girino:{para:['gotim','cavaloMarinho'],dica:'Evoluir com mais da metade da vida → Boto Rosa; ferido (metade ou menos) → Cavalo Marinho.',
+    pontos:u=>u.hp>ESP[u.esp].hp/2?[1,0]:[0,1]},
+  argila:{para:['cascalho','homemLagarto'],dica:'Apanhou mais do que bateu neste estágio → Troll; bateu mais do que apanhou → Homem Lagarto.',
+    pontos:u=>[hist(u).sofrido||0,hist(u).feito||0]},
   semente:{para:['broto','filhote'],dica:'Turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote.',
     pontos:u=>[hist(u).parado+turnosEm(u,'flor'),hist(u).correu+turnosEm(u,'plan')]},
-  penugem:{para:['gaviao','anzu'],dica:'Capturar uma torre neste estágio → Anzu; senão, evoluir a até 2 casas do mestre ou no próprio castelo/fortaleza → Grifo.',
-    pontos:u=>hist(u).torre?[0,1]:pertoDoLar(u)?[1,0]:[0,0]},
-  essencia:{para:['olho','espada'],dica:'Evoluir ao lado do mestre → Espada; longe dele → Cumacanga.',
-    pontos:u=>{const m=mestreDe(u.lado);return m&&d6c(u.c,u.r,m.c,m.r)<=1?[0,1]:[1,0];}},
+  // Grifo, o guardião: cada turno terminado numa construção sua; Anzu, o ladrão: cada torre capturada vale 3
+  penugem:{para:['gaviao','anzu'],dica:'Cada turno terminado numa construção sua (torre, fortaleza, castelo) conta para o Grifo; cada torre capturada vale 3 para o Anzu.',
+    pontos:u=>[hist(u).guarda||0,(hist(u).torre||0)*3]},
+  // a arma nasce do combate: quem deu o golpe final em algum inimigo vira Espada
+  essencia:{para:['olho','espada'],dica:'Derrubou algum inimigo neste estágio → Espada; não derrubou ninguém → Cumacanga.',
+    pontos:u=>(hist(u).abates||0)>0?[0,1]:[1,0]},
 };
-const novaHist=()=>({ter:{},passos:0,p0:0,parado:0,correu:0,torre:0});
+const novaHist=()=>({ter:{},passos:0,p0:0,parado:0,correu:0,torre:0,guarda:0,abates:0,feito:0,sofrido:0});
 function hist(u){return u.h||(u.h=novaHist());}
 const turnosEm=(u,...ts)=>ts.reduce((s,t)=>s+(hist(u).ter[t]||0),0);
-function pertoDoLar(u){
-  const m=mestreDe(u.lado),k=K(u.c,u.r);
-  return (m&&d6c(u.c,u.r,m.c,m.r)<=2)||((J.ter[k]==='cast'||J.ter[k]==='fort')&&J.dono[k]===u.lado);
-}
 // ramo que venceria agora (null = empate, seria sorteado)
 function tendencia(u){
   const R=RAMOS[u.esp];if(!R)return ESP[u.esp].evo;
@@ -897,6 +896,7 @@ function evoTxt(u){
 function anotaTurno(u){
   const h=hist(u),t=terDe(u),p=h.passos-h.p0;
   h.ter[t]=(h.ter[t]||0)+1;if(p===0)h.parado++;else if(p>=2)h.correu++;h.p0=h.passos;
+  if(ehConstrucao(t)&&J.dono[K(u.c,u.r)]===u.lado)h.guarda=(h.guarda||0)+1;
 }
 const INVOCAVEIS=['brasa','semente','girino','argila','ovoAlado','essencia'];
 // elementais da Força (ver seção Magia): começam com 100 de vida e não se curam durante a partida
@@ -1633,10 +1633,12 @@ async function golpear(a,d,mult,contra){
     if(Math.random()<ch){
       const dano=rolar(pg);acertos++;total+=dano;
       d.hp-=dano;d.hit=performance.now();flutua(d,'-'+dano,d.elemental?'#ffb070':'#ff7070',d.elemental?150:0);
+      if(!a.elemental)hist(a).feito=(hist(a).feito||0)+dano; // história do estágio (ramo da Argila)
+      if(!d.elemental)hist(d).sofrido=(hist(d).sofrido||0)+dano;
       ganhaXp(a,dano);
       if(CENA)await cenaGolpe(a,d,true,dano,i);
       if(d.hp<=0){
-        ganhaXp(a,20);registraGolpes(a,d,acertos,i+1,total,contra,ch);
+        ganhaXp(a,20);if(!a.elemental)hist(a).abates=(hist(a).abates||0)+1;registraGolpes(a,d,acertos,i+1,total,contra,ch);
         if(CENA)await cenaQueda(d);
         if(d.elemental){d.hp=0;flutua(d,'Elemental desfeito','#ffb070',300);log(`${nome(d)} se desfez e não volta nesta partida.`);}
         else morre(d);
@@ -1872,8 +1874,10 @@ const MAGIAS={
   eclipse:{nome:'Eclipse',ordem:'eclipse',custo:30,alvo:'global',area:'o mapa inteiro',duracao:'até alguém lançar Eclipse de novo',
     desc:'Inverte o sentido do tempo para todos: Noite → Entardecer → Dia → Manhã. Lançar de novo restaura o sentido normal.',
     valida:()=>true,
-    executa:async l=>{J.cicloDir*=-1;log(J.cicloDir<0?'⟲ O tempo passa a correr ao contrário.':'O tempo volta a correr no sentido normal.');await dorme(300);},
+    executa:async l=>{J.cicloDir*=-1;J.ultEclipse=J.turno;log(J.cicloDir<0?'⟲ O tempo passa a correr ao contrário.':'O tempo volta a correr no sentido normal.');await dorme(300);},
     ia:l=>{
+      // espera 4 rodadas desde o último Eclipse: senão a IA vira o tempo para lá e para cá e gasta a magia do turno à toa
+      if(J.ultEclipse!=null&&J.turno-J.ultEclipse<4)return null;
       // compara as próximas 2 rodadas nos dois sentidos: quanto a precisão média do Necromancer melhora em relação à sua
       const ganho=dir=>{let s=0;for(let p=1;p<=2;p++){const f=FASES[faseIdx(J.ciclo+dir*p)];
         for(const u of J.un){const e=ESP[u.esp],h=HORA_EL[e.el];if(e.mestre||h==='neutro')continue;const m=((h==='dia')===f.diurno?f.forca:-f.forca);s+=u.lado===l?m:-m;}}return s;};
@@ -1885,8 +1889,11 @@ const MAGIAS={
       u.dominado=u.lado;u.lado=l;u.movido=u.agiu=false;tocaMagia(u,'Dominado!','#c080ff');},
     ia:l=>{const ini=J.un.filter(x=>x.lado!==l);
       const r=melhorDe(criaturasContra(l).filter(u=>u.dominado==null&&!u.sono&&!u.petra&&!protegido(l,u)),u=>{
-        const alvos=ini.filter(e=>e!==u&&d6c(u.c,u.r,e.c,e.r)<=movDe(u)+1);if(!alvos.length)return -Infinity;
-        return valorDe(u)+(alvos.some(e=>ESP[e.esp].mestre)?30:0);});
+        // vale pelo golpe que a criatura dominada daria agora (nível 0 rende pouco e quase nunca compensa 70 MP)
+        const alvos=ini.filter(e=>e!==u&&d6c(u.c,u.r,e.c,e.r)<=movDe(u)+ESP[u.esp].alc);if(!alvos.length)return -Infinity;
+        let b=-Infinity;for(const e of alvos){const ch=chanceAcerto(u,e,terEv(e)),d=danoBase(u,e);
+          b=Math.max(b,Math.min(d*ch,e.hp)*(ESP[e.esp].mestre?2:1)+(d*0.9>=e.hp&&ch>=0.6?15:0));}
+        return b;});
       return r&&isFinite(r.s)?{s:r.s,alvo:{u:r.alvo}}:null;}},
 
   // ----- Coro dos Elementos -----
