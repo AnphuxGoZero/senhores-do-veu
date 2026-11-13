@@ -277,12 +277,12 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 .retrato #vez>span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* linha 1: turno e vez; linha 2: reserva e saldo de MP */
 /* alerta de cerco: só aparece quando falta 1 casa (ou nenhuma) para alguém vencer por cerco */
 #alertaCerco{display:none}
-#cristalHud{display:none}
-#cristalHud.on{display:flex;align-items:center;gap:7px;position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:3;font-size:12px;padding:5px 10px;border-radius:8px;background:#0e1015e6;border:1px solid #4a5060;box-shadow:0 4px 14px #000a;white-space:nowrap;pointer-events:none}
-#cristalHud .barra{width:130px;height:8px;border-radius:4px;background:#2a2e38;position:relative;overflow:hidden;flex:none}
-#cristalHud .barra.meio::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:#e8eaf0}
-#cristalHud .barra i{position:absolute;top:0;bottom:0;transition:width .4s}
-.retrato #cristalHud .barra{width:84px}
+#rodape .pMeio{display:flex;align-items:center;gap:6px}
+#rodape .pCristal{display:inline-flex;align-items:center;gap:3px;font-size:12px;white-space:nowrap}
+/* cabo de guerra do cristal: faixa fina na borda de baixo do placar, com um marco no meio */
+#rodape .pCabo{position:absolute;left:8px;right:8px;bottom:0;height:5px;border-radius:3px;background:#262a34;overflow:hidden}
+#rodape .pCabo i{position:absolute;top:0;bottom:0;transition:left .5s,right .5s,background .5s}
+#rodape .pCabo::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:#e8eaf0}
 #alertaCerco.on{display:flex;flex-direction:column;align-items:flex-end;gap:4px;position:absolute;right:8px;bottom:8px;z-index:3}
 #alertaCerco div{font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;background:#0e1015e6;border:1px solid;box-shadow:0 4px 14px #000a;cursor:help;animation:alertaCerco 1.6s ease-in-out infinite}
 #alertaCerco .contra{color:#ff8a80;border-color:#a8565f}
@@ -458,7 +458,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
     <div id="menuJogo"></div>
   </div>
   <div class="barra-mapa" id="rodape"></div>
-  <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><div id="alertaCerco"></div><div id="cristalHud"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
+  <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><div id="alertaCerco"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
   </div>
   <div id="lado"><div id="ladoIn">
     <canvas id="mini" title="Mini mapa: clique ou arraste para mover a câmera"></canvas>
@@ -2681,7 +2681,12 @@ async function agirIA(u,reservas){
   const A=alcancaveis(u);
   const inimigos=J.un.filter(e=>e.lado!==u.lado);
   let melhor=null;
+  // Torre do Cristal: quem está nela não sai (só ataca dali); quem alcança a torre vazia neste turno vai para ela
+  // (se der para atacar de cima dela, ataca; senão, só ocupa)
+  const CR=!ehMestre&&J.cristal?J.cristal.k:null,naTorre=CR!=null&&K(u.c,u.r)===CR;
+  const tomaTorre=CR!=null&&!naTorre&&A.dest.has(CR)&&!unidadeEm(...DK(CR));
   for(const k of A.dest){
+    if((naTorre||tomaTorre)&&k!==CR)continue;
     const [c,r]=DK(k);
     const perigo=ehMestre?ameaca(k,u):0;
     for(const e of inimigos){
@@ -2706,6 +2711,7 @@ async function agirIA(u,reservas){
     await atacar(u,melhor.e);
     return;
   }
+  if(tomaTorre){await moverPara(u,CR,A.prev);u.agiu=true;return;}
   // sem ataque bom: andar até um objetivo
   let alvoK=null;
   const meuForte=J.ter.findIndex((t,k)=>t==='cast'&&J.dono[k]===u.lado);
@@ -2729,8 +2735,8 @@ async function agirIA(u,reservas){
     const C=J.cristal;
     if(C){
       if(K(u.c,u.r)===C.k){u.movido=u.agiu=true;return;}
-      const oc=unidadeEm(...DK(C.k)),perigo=C.lado!=null&&C.lado!==u.lado&&C.v>=CRISTAL_META*.4;
-      if((!oc||oc.lado!==u.lado)&&(perigo||!reservas.has(C.k))){alvoK=C.k;reservas.add(C.k);}
+      // as criaturas escaladas para a torre (ver turnoIA) andam até ela: tomam se estiver vazia, cercam se for de um rival, escoltam se for nossa
+      if(reservas.cristal?.has(u.id))alvoK=C.k;
     }
     if(alvoK!=null){}
     else if(bu!=null&&(cercoJa||bdu<=bd||bd>8)){alvoK=bu;reservas.add(bu);}
@@ -2781,6 +2787,14 @@ async function turnoIA(l=1){
   if(J.fim){J.ocupado=false;return;}
   const reservas=new Set();
   const lista=J.un.filter(u=>u.lado===l&&!ESP[u.esp].mestre);
+  // Torre do Cristal: escala para a torre as criaturas mais próximas dela. Metade do exército em tempo normal;
+  // todas se um rival está na torre ou já montou 40% do cristal. Quem já está em cima dela conta, e fica.
+  if(J.cristal){
+    const C=J.cristal,[cc,cr]=DK(C.k),oc=unidadeEm(cc,cr);
+    const urgente=(oc&&oc.lado!==l)||(C.lado!=null&&C.lado!==l&&C.v>=CRISTAL_META*.4);
+    const n=urgente?lista.length:lista.length<2?0:lista.length===2?1:Math.ceil(lista.length/2); // a primeira criatura fica livre para tomar torres
+    reservas.cristal=new Set([...lista].sort((a,b)=>d6c(a.c,a.r,cc,cr)-d6c(b.c,b.r,cc,cr)).slice(0,n).map(u=>u.id));
+  }
   lista.sort((a,b)=>ESP[b.esp].alc-ESP[a.esp].alc);
   for(const u of lista){await agirIA(u,reservas);atualiza();if(J.fim){J.ocupado=false;return;}await dorme(120);}
   const m=mestreDe(l);
@@ -4212,24 +4226,23 @@ function atualiza(){
        it(l,'pTor',`<b>${torresDe(l)}</b>`,l?`Torres ${doM(l)}`:'Suas torres')];
      return `<div class="pLado lado${l}${ativo(l)?'':' fora'}"${ativo(l)?'':` title="${OM(l)} está fora da partida"`}>${(l&&NP()===2?partes.reverse():partes).join('')}</div>`;}; // 1x1: espelhado; 1x1x1: cada rival com o nome na frente
    if(!PLACAR_TORRE)PLACAR_TORRE=iconePx(estiloIcone('torre'),'torre').toDataURL();
+   // Torre do Cristal: o andamento do cabo de guerra fica no meio do placar, ao lado do ícone de torre (no mapa, só o anel e o cristal)
+   const C=J.cristal,corC=C&&C.lado!=null?COR[C.lado]:'#9aa3ad';
+   const dicaC=C?`Cristal: ${C.v?`${C.v} de ${CRISTAL_META} montados para ${C.lado?OM(C.lado):'você'}`:'desmontado'}. Força por turno na torre do centro: ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${forcaCristal(l)}`).join(', ')}.`:'';
+   const meio=quem=>`<div class="pMeio"><img class="pTorre" src="${PLACAR_TORRE}" alt="Torres" title="Torres: você à esquerda, ${quem} à direita">${C?`<span class="pCristal" title="${dicaC}">💎<b style="color:${corC}">${C.v}/${CRISTAL_META}</b></span>`:''}</div>`;
    const rod=document.getElementById('rodape');rod.classList.toggle('tres',NP()>2);
    rod.innerHTML=NP()>2
-     ?lado(0)+`<img class="pTorre" src="${PLACAR_TORRE}" alt="Torres" title="Torres: você à esquerda, os rivais à direita">`+`<div class="pDir">${lado(1)}${lado(2)}</div>`
-     :lado(0)+`<img class="pTorre" src="${PLACAR_TORRE}" alt="Torres" title="Torres: você à esquerda, ${ART(1)} ${NM(1)} à direita">`+lado(1);}
+     ?lado(0)+meio('os rivais')+`<div class="pDir">${lado(1)}${lado(2)}</div>`
+     :lado(0)+meio(`${ART(1)} ${NM(1)}`)+lado(1);
+   // 1x1: a faixa cresce do meio para o lado de quem monta (você à esquerda, o rival à direita); chegou na ponta, venceu.
+   // 1x1x1: só um lado tem cristal montado por vez, então a faixa cresce do meio para as duas pontas na cor desse lado.
+   if(C){const q=50-C.v/CRISTAL_META*50,tres=NP()>2;
+     rod.innerHTML+=`<div class="pCabo" title="${dicaC}"><i style="left:${tres||C.lado===0?q:50}%;right:${tres||C.lado!==0?q:50}%;background:${corC}"></i></div>`;}}
   // alerta de cerco (sobre o mapa, PC e celular): some enquanto ninguém estiver a 1 casa de vencer
   {const perto=c=>c.n>0&&c.n>=c.precisa-1,a=[];
    if(!J.fim&&perto(c0))a.push(`<div class="contra" title="${OM(c0.por)} ocupa ${c0.n} casa${c0.n>1?'s':''} da sua área urbana. Com ${c0.precisa} no início do turno ${ART(c0.por)==='a'?'dela':'dele'}, ${ART(c0.por)==='a'?'ela':'ele'} ${NP()>2?'tira você da partida':'vence'}.">⚠ Cercado ${c0.n}/${c0.precisa}</div>`);
    if(!J.fim&&perto(c1))a.push(`<div class="favor" title="Você ocupa ${c1.n} casa${c1.n>1?'s':''} da área urbana ${doM(c1.o)}. Com ${c1.precisa} no início do seu turno, ${NP()>2?`${OM(c1.o)} sai da partida`:'você vence'}.">⚔ Cercando ${c1.n}/${c1.precisa}</div>`);
    const el=document.getElementById('alertaCerco');el.innerHTML=a.join('');el.classList.toggle('on',a.length>0);}
-  // Torre do Cristal: barra do cabo de guerra no alto do mapa (1x1: puxa do meio para cada lado; 1x1x1: enche na cor de quem monta)
-  {const el=document.getElementById('cristalHud'),C=J.cristal;el.classList.toggle('on',!!C);
-   if(C){
-     const p=C.v/CRISTAL_META*100,cor=C.lado!=null?COR[C.lado]:'#9aa3ad';
-     const fill=NP()>2?`left:0;width:${p}%`:C.lado===1?`left:50%;width:${p/2}%`:`right:50%;width:${p/2}%`;
-     const fs=LADOS().filter(ativo).map(l=>`<b style="color:${COR[l]}">+${forcaCristal(l)}</b>`).join(' ');
-     const oc=unidadeEm(...DK(C.k));
-     el.innerHTML=`<span>💎</span><span class="barra${NP()>2?'':' meio'}"><i style="${fill};background:${cor}"></i></span><b style="color:${cor}">${C.v}/${CRISTAL_META}</b><span class="vez">força ${fs}${oc?` · <span style="color:${COR[oc.lado]}">${oc.lado?NM(oc.lado):'você'} na torre</span>`:''}</span>`;
-   }}
   // Encerrar turno fica sozinho no pé da coluna da direita
   // botão ✦ Magia: depois da primeira invocação, enquanto a magia do turno não foi usada
   {const bm=document.getElementById('btMagia'),ok=minha&&J.invocou?.[0]&&podeMagia(0);
