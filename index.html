@@ -484,7 +484,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
       <p><b>Torre do Cristal:</b> modo escolhido no novo jogo, junto do número de mestres. No centro do mapa há uma torre com um cristal desmontado. Quem termina o turno com uma unidade nela puxa o cabo de guerra: 1 ponto, mais 1 por cada outra torre que controla. Os cacos vão se juntando e o cristal ganha a cor de quem está montando. Se um rival toma a torre, ele primeiro desfaz o que estava montado e depois monta para si. Quem chegar a 50 vence na hora; derrotar o mestre ou cercar o castelo continuam valendo.</p>
       <p><b>Mana:</b> no início do turno você ganha +15 por torre e +5 por fortaleza ou castelo, e paga a manutenção das criaturas (3, 6 ou 10 por nível). A sobra vai para a reserva, que guarda no máximo 300 MP (o que passar disso se perde); o que faltar sai dela. Com a reserva zerada, as criaturas sem pagamento ficam enfraquecidas (selo roxo) e, se o déficit continuar, uma delas debanda a cada turno.</p>
       <p><b>Dicas:</b> use Gatos Alados, rápidos e voadores, para tomar torres neutras logo no início. Não deixe criaturas paradas à toa, porque elas custam manutenção. Tomar torres do mestre inimigo corta a renda dele e o limite do exército.</p>
-      <p><b>Evoluir na criação:</b> quando sua reserva chega a 250 MP, o menu do mestre ganha <b>Evoluir</b>. Escolha uma criatura inicial e o jogo oferece duas formas de estágio 1, conforme o que seu exército mais viveu na partida (horário dos ataques, dano feito e sofrido, terrenos, turnos parados ou correndo, feridos, abates). A escolhida custa 250 MP e fica fixa: daí em diante, invocar aquela criatura já traz a forma evoluída, pelo custo dela.</p>
+      <p><b>Evoluir na criação:</b> quando sua reserva chega a 200 MP, o menu do mestre ganha <b>Evoluir</b>. Escolha uma criatura inicial e o jogo oferece duas formas de estágio 1, conforme o que seu exército mais viveu na partida (horário dos ataques, dano feito e sofrido, terrenos, turnos parados ou correndo, feridos, abates). A escolhida custa 200 MP e fica fixa: daí em diante, invocar aquela criatura já traz a forma evoluída, pelo custo dela.</p>
       <p>Criaturas ganham XP lutando e evoluem: nascem no estágio 0 (baratas e frágeis, evoluem com pouca XP) e passam pelos estágios 1, 2 e 3. Algumas linhas se dividem em ramos, conforme o que a criatura viveu no estágio (a ficha mostra a tendência; em empate, é sorteio):</p>
       <ul>
         <li><b>Brasa:</b> evolui no Dia → Salamandra; à Noite → Diabrete; na Manhã ou no Entardecer → Filhote Infernal.</li>
@@ -1008,7 +1008,7 @@ const INVOCAVEIS=['brasa','semente','girino','argila','ovoAlado','essencia'];
 // criaturas iniciais e, dali em diante, invocar aquela criatura já traz a forma escolhida (pelo custo dela).
 // As duas opções saem do histórico da partida (J.hj: o que o exército daquele mestre mais viveu até agora).
 // Escolhida, a forma fica fixa até o fim da partida.
-const EVO_CUSTO=250;
+const EVO_CUSTO=200;
 const novaHj=()=>({atkDia:0,atkNoite:0,atkCresp:0,feito:0,sofrido:0,abates:0,torre:0,ter:{},parado:0,correu:0,saudavel:0,ferido:0,feridoDia:0,feridoNoite:0});
 function hj(l){J.hj=J.hj||[];return J.hj[l]||(J.hj[l]=novaHj());}
 const contaHj=u=>u&&!u.elemental&&!ESP[u.esp].mestre&&u.dominado==null; // só as criaturas do próprio mestre
