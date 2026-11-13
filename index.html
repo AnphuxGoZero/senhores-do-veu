@@ -2212,8 +2212,10 @@ async function clique(c,r){
       atualiza();return;
     }
   }
-  // criatura sua sob efeito ruim (Sono, Petrificar…): abre ao lado dela as magias que ajudam, como Despertar (tocar de novo fecha)
-  if(alvo&&alvo.lado===0&&alvo!==inspAntes&&afetada(alvo)&&J.invocou?.[0]&&magiaPronta(alvo)){
+  // criatura sua sob efeito ruim (Sono, Petrificar…) ou que já agiu (✓): abre ao lado dela as magias que ajudam,
+  // como Despertar, Cura ou Novo Fôlego (tocar de novo fecha)
+  const jaAgiu=u=>u.agiu&&!ESP[u.esp].mestre;
+  if(alvo&&alvo.lado===0&&alvo!==inspAntes&&(afetada(alvo)||jaAgiu(alvo))&&J.invocou?.[0]&&magiaPronta(alvo)){
     desseleciona();J.insp=alvo;J.menuAlvo=alvo;J.menuAlvoFase='magia';atualiza();return; // direto na lista: na criatura sua não há Força
   }
   if(alvo&&alvo.lado===0&&(!alvo.agiu||ESP[alvo.esp].mestre))seleciona(alvo);
