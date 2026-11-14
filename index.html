@@ -422,14 +422,12 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 #saves .menuIni button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 18px}
 #saves.tela .menuIni button.grande{min-height:58px;padding:12px 18px;justify-content:center;font-family:"Pirata One",serif;font-size:26px;letter-spacing:.04em}
 #saves .menuIni button:disabled{opacity:.5}
-#saves.tela.ini{justify-content:space-between;image-rendering:pixelated;
-  background:linear-gradient(180deg,#0007 0%,#0000 28%,#0000 52%,#000b 100%),var(--fundoMenu,none) 50% 72%/cover no-repeat,#14040c}
+#saves.tela.arte{image-rendering:pixelated;background:linear-gradient(180deg,#000a 0%,#0007 40%,#0008 70%,#000c 100%),var(--fundoMenu,none) var(--fundoX,50%) 72%/cover no-repeat,#14040c}
+#saves.tela.arte[data-cena=carregar]{background:linear-gradient(180deg,#0008 0%,#0003 35%,#0004 65%,#000b 100%),var(--fundoMenu,none) var(--fundoX,50%) 72%/cover no-repeat,#14040c}
+#saves.tela.arte .vez{text-shadow:0 1px 3px #000}
+#saves.tela.arte.ini{justify-content:space-between;background:linear-gradient(180deg,#0007 0%,#0000 28%,#0000 52%,#000b 100%),var(--fundoMenu,none) var(--fundoX,50%) 72%/cover no-repeat,#14040c}
 #saves.tela.ini .tituloJogo{margin-top:clamp(10px,6vh,64px)}
 #saves.tela.ini>.menuIni{margin-bottom:clamp(10px,7vh,72px)}
-#saves.tela.ini .menuIni button{background:#1a080cd9;border-color:#6a2a20;color:#f3e2c8}
-#saves.tela.ini .menuIni button:hover:not(:disabled){background:#2c0e12e6}
-#saves.tela.ini .menuIni button.pri{background:linear-gradient(180deg,#b23a1e,#6e1510);border-color:#ffb060}
-#saves.tela.ini .menuIni button.pri:hover{background:linear-gradient(180deg,#c84a24,#821a12)}
 #saves.cfg .subt{display:none}
 #saves.cfg .mestres{flex:0 1 auto;min-height:0;width:100%;max-width:920px;display:grid;gap:6px;margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));grid-auto-rows:1fr}
 #saves.cfg .mestres button{min-height:0;overflow:hidden;background:#1d2029cc}
@@ -453,6 +451,18 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 #saves.tela>.menuIni{max-width:380px}
 .paisagem #saves.tela.ini .tituloJogo{font-size:56px;margin-bottom:14px}
 .paisagem #saves .menuIni{gap:8px}.paisagem #saves.tela .menuIni button.grande{min-height:46px;padding:6px 18px;font-size:22px}
+/* telas com arte de fundo: botões e títulos no tom do amanhecer */
+#saves.tela.arte .tituloJogo{font-family:"Pirata One",serif;font-weight:400;letter-spacing:.02em;
+  background:linear-gradient(180deg,#fff3c4 0%,#ffd36a 45%,#c8861e 75%,#8a5512 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 0 #3a2208) drop-shadow(0 4px 12px #000c)}
+#saves.tela.arte:not(.ini) .tituloJogo{font-size:clamp(30px,5vw,46px);line-height:1.1;margin-bottom:4px}
+#saves.tela.arte button{background:#1a080cd9;border-color:#6a2a20;color:#f3e2c8}
+#saves.tela.arte button:hover:not(:disabled){background:#2c0e12e6}
+#saves.tela.arte button.pri{background:linear-gradient(180deg,#b23a1e,#6e1510);border-color:#ffb060}
+#saves.tela.arte button.pri:hover:not(:disabled){background:linear-gradient(180deg,#c84a24,#821a12)}
+#saves.tela.arte small,#saves.tela.arte .vez{color:#e0c4ac}
+#saves.tela.arte .mestres .spr{background-color:#14050acc}
+.paisagem #saves.tela.arte:not(.ini) .tituloJogo{font-size:22px}
 
 /* ---------- Menu de invocação: grade de cartões, sem rolagem. No PC abre ao lado da construção; no toque, no meio do mapa ---------- */
 #menuM.grade{width:350px}
@@ -1392,7 +1402,7 @@ function carregar(slot){
 }
 const descSave=s=>`${s.np===3?'1×1×1 · ':''}${s.cristal?'💎 Cristal · ':''}Turno ${s.turno} · ${s.tema} · ${new Date(s.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`;
 function salvarJogo(){
-  const el=document.getElementById('saves');el.classList.remove('cfg','tela');
+  const el=document.getElementById('saves');el.classList.remove('cfg','tela','ini','arte');
   const ok=gravar('manual');
   el.innerHTML=`<div><strong>${ok?'Jogo salvo.':'Não foi possível salvar agora.'}</strong></div>
     <div class="vez">${ok?descSave(lerSave('manual')):'Só dá para salvar no seu turno, sem ação em andamento.'}</div>
@@ -1427,8 +1437,8 @@ async function lerArquivoSave(f,daConfig=false){
 }
 function abrirCarregar(daConfig=false,aviso=''){
   const el=document.getElementById('saves'),man=lerSave('manual'),aut=lerSave('auto');
-  el.classList.remove('cfg','ini');el.classList.toggle('tela',!!daConfig); // vindo da tela inicial, continua em tela cheia
-  let h=`<div><strong>Carregar jogo</strong></div>${daConfig?'':'<div class="vez">O jogo atual será substituído.</div>'}<div class="col">`;
+  el.classList.remove('cfg','ini','arte');el.classList.toggle('tela',!!daConfig);if(daConfig)poeArte(el,'carregar'); // vindo da tela inicial, continua em tela cheia
+  let h=`${daConfig?'<div class="tituloJogo">Carregar Jogo</div>':'<div><strong>Carregar jogo</strong></div><div class="vez">O jogo atual será substituído.</div>'}<div class="col">`;
   h+=man?`<button onclick="carregar('manual')"><b>Salvo</b><small>${descSave(man)}</small></button>`:'<div class="vez">Nenhum jogo salvo manualmente.</div>';
   if(aut)h+=`<button onclick="carregar('auto')"><b>Automático</b><small>${descSave(aut)}</small></button>`;
   h+=`</div>${aviso?`<div class="vez" style="margin-top:8px;color:var(--acc)">${aviso}</div>`:''}
@@ -1436,19 +1446,21 @@ function abrirCarregar(daConfig=false,aviso=''){
     <div class="vez" style="margin-top:6px">Os jogos ficam salvos neste navegador. Exporte para guardar uma cópia ou continuar em outro aparelho.</div><div class="linha"><button onclick="${daConfig?'desenhaInicio()':'fecharSaves()'}">${daConfig?'Voltar':'Cancelar'}</button></div>`;
   el.innerHTML=h;el.style.display='block';
 }
-function fecharSaves(){const el=document.getElementById('saves');el.style.display='none';el.classList.remove('cfg','tela','ini');}
+function fecharSaves(){const el=document.getElementById('saves');el.style.display='none';el.classList.remove('cfg','tela','ini','arte');}
 // tela de novo jogo: escolha do mestre (cada um com sua miniatura, força e magias exclusivas)
 let cfgSel=null,cfgInicio=false;
 // ---------- Fundo do menu principal (pixel art gerada): amanhecer sangrento sobre um campo de batalha mítico ----------
 // O sol nasce atrás de uma torre meio caída; o céu vermelho se abre em raios. Em volta, espadas cravadas e corpos,
 // e restos dos seres míticos que lutaram ali: o esqueleto de um dragão, a espada de um titã, o crânio e a asa de feras.
 // Desenhado uma vez (384×216, ampliado sem suavizar) e guardado.
-let fundoMenuURL=null;
-function fundoMenu(){
-  if(fundoMenuURL)return fundoMenuURL;
-  const W=384,H=216,HZ=146,SX=192,SY=HZ+2;
+// cena: 'inicio' (a torre caída), 'batalha' (o acampamento de guerra) ou 'carregar' (o campo da memória).
+// As três são trechos do mesmo campo, sob o mesmo amanhecer: só muda onde o sol nasce e o que está em volta.
+const fundosMenu={};
+function fundoMenu(cena='inicio'){
+  if(fundosMenu[cena])return fundosMenu[cena];
+  const W=384,H=216,HZ=146,SX={inicio:192,batalha:300,carregar:86}[cena],SY=HZ+2,FASE={inicio:0,batalha:2.2,carregar:4.1}[cena];
   const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
-  const img=g.createImageData(W,H),D=img.data,rnd=mulberry32(1987);
+  const img=g.createImageData(W,H),D=img.data,rnd=mulberry32({inicio:1987,batalha:2024,carregar:777}[cena]);
   const CACHE={},rgb=h=>CACHE[h]||(CACHE[h]=[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]);
   const px=(x,y,cor)=>{x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=W||y>=H||!cor)return;const i=(y*W+x)*4,v=rgb(cor);D[i]=v[0];D[i+1]=v[1];D[i+2]=v[2];D[i+3]=255;};
   const BY=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5],dt=(x,y)=>(BY[(y&3)*4+(x&3)]+.5)/16; // pontilhado ordenado
@@ -1467,7 +1479,7 @@ function fundoMenu(){
     let v=Math.pow(Math.max(0,y)/HZ,1.5)*7.4+4.4*Math.exp(-d/40);
     const r=Math.sin(a*22+Math.sin(a*7)*1.4);if(r>.3)v+=(r-.3)*2.8*Math.max(0,1-d/320);
     return v;};
-  const nuvem=(x,y)=>y>14&&y<HZ-14&&Math.sin(x*.021+y*.31)+Math.sin(x*.047-y*.17+2)*.8+Math.sin(y*.55+x*.006)*.9+Math.sin(y*.1+1.2)*1.3>2.05;
+  const nuvem=(x,y)=>y>14&&y<HZ-14&&Math.sin((x+FASE*60)*.021+y*.31)+Math.sin(x*.047-y*.17+2)*.8+Math.sin(y*.55+x*.006)*.9+Math.sin(y*.1+1.2)*1.3>2.05;
   for(let y=0;y<=HZ+14;y++)for(let x=0;x<W;x++){
     let v=ceuV(x,y);
     if(nuvem(x,y))v=nuvem(x,y+1)?v-2.6:v+1.6; // nuvens escuras, com a borda de baixo acesa pelo sol
@@ -1477,16 +1489,18 @@ function fundoMenu(){
 
   // corvos voando em círculos
   for(let i=0;i<14;i++){const x=40+rnd()*300,y=20+rnd()*70,s=rnd()<.4?2:1;px(x,y,'#1a040a');for(let k=1;k<=s;k++){px(x-k,y-k+(s>1?0:0),'#1a040a');px(x+k,y-k,'#1a040a');}}
-  // uma serpe (dragão alado) ao longe, no céu da esquerda
-  {const ox=78,oy=58,cor='#1c050b';
+  // serpe (dragão alado) ao longe
+  const serpe=(ox,oy)=>{const cor='#1c050b';
    poly([[ox-26,oy-6],[ox-14,oy-2],[ox-6,oy+2],[ox-2,oy-1],[ox-8,oy-8],[ox-20,oy-12]],cor); // asa esquerda
    poly([[ox+26,oy-14],[ox+14,oy-4],[ox+6,oy+2],[ox+2,oy-1],[ox+10,oy-10]],cor);            // asa direita
    lin(ox-2,oy+1,ox+3,oy+1,cor,2);lin(ox+3,oy,ox+8,oy-3,cor);px(ox+9,oy-4,cor);px(ox+9,oy-5,cor); // corpo e cabeça
-   lin(ox-3,oy+2,ox-12,oy+7,cor);lin(ox-12,oy+7,ox-16,oy+6,cor);}                           // cauda
+   lin(ox-3,oy+2,ox-12,oy+7,cor);lin(ox-12,oy+7,ox-16,oy+6,cor);};                          // cauda
+  if(cena==='inicio')serpe(78,58);else if(cena==='batalha'){serpe(150,40);serpe(196,70);}else serpe(260,46);
 
   // morros distantes, com a crista acesa perto do sol
-  const rf=x=>HZ-3-5*Math.sin(x*.028+1)-3*Math.sin(x*.083)-2*Math.sin(x*.21+3);
+  const rf=x=>HZ-3-5*Math.sin(x*.028+1+FASE)-3*Math.sin(x*.083+FASE*2)-2*Math.sin(x*.21+3);
   for(let x=0;x<W;x++){const t=Math.round(rf(x));for(let y=t;y<=HZ+16;y++)px(x,y,'#340912');px(x,t,pal(CEU,10.5-Math.abs(x-SX)/14,x,t));}
+  if(cena==='inicio'){
   // esqueleto de dragão deitado no morro da esquerda: espinha arqueada, costelas, crânio com chifres
   {const cor='#22050d',sp=t=>[22+t*112,rf(22+t*112)-2-20*Math.sin(Math.PI*Math.min(1,t*1.15))];
    for(let i=0;i<=90;i++){const [x,y]=sp(i/90);for(let a=-1;a<=1;a++)px(x,y+a,cor);}
@@ -1498,13 +1512,38 @@ function fundoMenu(){
    poly([[x-3,b],[x+3,b],[x+4,b-46],[x-4,b-46]],cor);lin(x-3,b,x-4,b-46,luz);     // lâmina, acesa do lado do sol
    poly([[x-15,b-47],[x+15,b-47],[x+13,b-51],[x-13,b-51]],cor);lin(x-15,b-48,x-13,b-51,luz); // guarda
    poly([[x-2,b-51],[x+2,b-51],[x+2,b-63],[x-2,b-63]],cor);elip(x,b-66,3,3,cor);px(x-2,b-67,luz);}
+  }
+
+  if(cena==='batalha'){
+    // um colosso de guerra (fera de presas com uma torre de cerco nas costas) atravessando o morro da esquerda
+    const bx=86,by=Math.round(Math.max(rf(66),rf(106)))-20,cor='#22050d',luz='#a8301c';
+    for(const lx of [-19,-9,8,17])for(let y=by+5;y<=Math.max(rf(bx+lx),by+20)+2;y++)for(let a=0;a<7;a++)px(bx+lx+a-3,y,cor);
+    elip(bx,by,26,13,cor);elip(bx-4,by-8,16,8,cor);elip(bx+25,by+4,9,8,cor);
+    for(let i=0;i<=16;i++)for(let a=0;a<3;a++)px(bx+31+a+Math.sin(i/16*1.6)*3,by+8+i,cor); // tromba
+    for(let i=0;i<=11;i++){px(bx+27+i,by+12-Math.sin(i/11*2)*5,'#ffd8a0');px(bx+27+i,by+13-Math.sin(i/11*2)*5,'#c09070');}                                    // presa
+    for(let y=-12;y<=6;y++)px(bx+Math.round(26*Math.sqrt(1-(y/13)**2)),by+y,luz);
+    for(let x=10;x<=26;x++)px(bx+x,by-Math.round(13*Math.sqrt(1-(x/26)**2)),luz);
+    poly([[bx-13,by-13],[bx+6,by-13],[bx+5,by-30],[bx-12,by-30]],cor);for(let x=-12;x<=5;x+=4)poly([[bx+x,by-30],[bx+x+2,by-30],[bx+x+2,by-33],[bx+x,by-33]],cor);
+    lin(bx+5,by-13,bx+5,by-32,luz);lin(bx-4,by-33,bx-4,by-44,'#2a1810');poly([[bx-3,by-44],[bx+6,by-42],[bx-3,by-39]],'#7a1418');
+    px(bx-6,by-22,'#ffae45');px(bx,by-22,'#ffae45'); // seteiras acesas
+  }
+  if(cena==='carregar'){
+    // esqueleto de uma hidra no morro da direita: um monte de ossos e cinco pescoços, uns erguidos, outros caídos
+    const cor='#22050d',hx=300;let hy=0;for(let x=hx-22;x<=hx+22;x++)hy=Math.max(hy,Math.round(rf(x)));
+    for(let x=-24;x<=24;x++){const t=Math.round(hy-1-9*Math.sqrt(1-(x/24)**2));for(let y=t;y<=hy+3;y++)px(hx+x,y,cor);if(x%4===0)px(hx+x,t,'#5a1a18');} // monte de ossos
+    for(const [cx,cy,ex,ey] of [[262,80,240,104],[282,70,270,84],[306,66,318,78],[338,78,350,96],[372,128,378,142]]){
+      const x0=hx-6,y0=hy-9;
+      for(let i=0;i<=40;i++){const t=i/40,x=(1-t)**2*x0+2*(1-t)*t*cx+t*t*ex,y=(1-t)**2*y0+2*(1-t)*t*cy+t*t*ey;
+        if(i%3!==2){px(x,y,cor);px(x+1,y,cor);}else px(x,y,pal(CEU,9.5-Math.abs(x-SX)/30,x,y));}
+      poly([[ex-3,ey-2],[ex+5,ey],[ex+7,ey+3],[ex-2,ey+3]],cor);px(ex+1,ey,pal(CEU,9,ex,ey));}
+  }
 
   // morros do meio
-  const rm=x=>HZ+12+4*Math.sin(x*.05)+3*Math.sin(x*.13+2);
+  const rm=x=>HZ+12+4*Math.sin(x*.05+FASE)+3*Math.sin(x*.13+2+FASE);
   for(let x=0;x<W;x++){const t=Math.round(rm(x));for(let y=t;y<H;y++)px(x,y,(x+y)%5===0?'#240810':'#1c060c');px(x,t,'#6a1414');}
 
   // a torre: alta, inclinada, com o topo quebrado; o sol atrás acende as bordas e atravessa as janelas
-  {const B=184,T=70,hw=y=>13+(y-T)/(B-T)*5,off=y=>(B-y)*.1;
+  if(cena==='inicio'){const B=184,T=70,hw=y=>13+(y-T)/(B-T)*5,off=y=>(B-y)*.1;
    const topo=r=>r<7?(r%5<3?T:T+3):T+4+(r-7)*1.05+Math.sin(r*1.7)*2.2; // ameias à esquerda, quebra descendo para a direita
    const buraco=(x,y)=>((x-(SX+9+off(y)))**2)/30+((y-104)**2)/110<1;
    for(let y=T;y<=B;y++){const l=Math.round(SX-hw(y)+off(y)),r=Math.round(SX+hw(y)+off(y));
@@ -1520,9 +1559,9 @@ function fundoMenu(){
   }
 
   // chão da frente, com poças de sangue que refletem o céu
-  const gf=x=>184+4*Math.sin(x*.02)+3*Math.sin(x*.071+1)+Math.abs(x-SX)*.02;
+  const gf=x=>184+4*Math.sin(x*.02+FASE)+3*Math.sin(x*.071+1+FASE)+Math.abs(x-SX)*.02;
   for(let x=0;x<W;x++){const t=Math.round(gf(x));for(let y=t;y<H;y++){const v=(y-t)/22;px(x,y,v<1&&dt(x,y)>v?'#2e0c12':dt(x,y)<.2?'#22080e':'#18050a');}px(x,t,'#8a2a1a');}
-  for(const [x,y,rx,ry] of [[120,200,14,3],[262,196,10,2],[200,209,18,3],[40,212,10,2],[340,206,12,2]])
+  if(cena!=='batalha')for(const [x,y,rx,ry] of cena==='inicio'?[[120,200,14,3],[262,196,10,2],[200,209,18,3],[40,212,10,2],[340,206,12,2]]:[[150,206,12,2],[60,212,9,2]])
     elip(x,y,rx,ry,(xx,yy)=>yy<y?'#7a1414':(xx+yy)%3?'#3a060c':'#4e0a10');
 
   // espadas cravadas no chão, lanças com estandartes rasgados, corpos caídos
@@ -1536,6 +1575,7 @@ function fundoMenu(){
     elip(x,y,9,3,cor);elip(x+dir*11,y-1,3,3,cor);lin(x-dir*3,y-2,x-dir*7,y-8,cor,2);lin(x+dir*2,y+1,x+dir*4,y+4,cor,2); // tronco, elmo, braço erguido, perna
     for(let i=-8;i<=8;i++)px(x+i,y-3,luz);px(x+dir*10,y-4,luz);px(x+dir*11,y-4,luz);px(x+dir*12,y-4,'#ffb070');px(x-dir*7,y-9,luz);
     elip(x-dir*13,y+1,4,3,'#1e0a0c');lin(x-dir*16,y-1,x-dir*10,y-1,luz);px(x-dir*13,y+1,'#c08040');}; // escudo
+  if(cena==='inicio'){
   for(const [x,len,ang,w] of [[30,36,-.25,2],[70,24,.18,1],[96,18,-.12,1],[148,14,.3,1],[232,16,-.22,1],[278,22,.15,1],[160,30,.2,2],[226,26,-.3,2],[176,12,-.4,1],[214,11,.35,1]])
     espada(x,gf(x)+(w>1?10:3),len,ang,w);
   lanca(84,gf(84)+4,48,.12,1);lanca(300,gf(300)+5,52,-.16,-1);lanca(160,gf(160)+2,30,-.08,-1);
@@ -1550,16 +1590,78 @@ function fundoMenu(){
    poly([[x,y],...ded.map(([a,b])=>[x+a,y+b]),[x+28,y-10]],cor);
    for(const [a,b] of ded)lin(x,y,x+a,y+b,luz);
    for(const [a,b,r] of [[-8,-30,3],[10,-28,2],[-18,-40,2]])elip(x+a,y+b,r,r,(xx,yy)=>pal(CEU,ceuV(xx,yy),xx,yy));} // furos na membrana mostram o céu
+  }
+
+  if(cena==='batalha'){
+    // o acampamento: tendas listradas com fogo lá dentro, o pavilhão do comando, estandartes das ordens, fogueiras
+    const tenda=(cx,b,w,h)=>{poly([[cx-w/2,b],[cx,b-h],[cx+w/2,b]],(x,y)=>x>cx?(Math.floor((x-cx)/4)%2?'#3a121a':'#4a1820'):(Math.floor((cx-x)/4)%2?'#200810':'#2a0c14'));
+      lin(cx,b-h,cx+w/2,b,'#ff8a3a');lin(cx,b-h,cx-w/2,b,'#5a1a18');
+      poly([[cx-w*.1,b],[cx,b-h*.45],[cx+w*.1,b]],(x,y)=>dt(x,y)<.5?'#ffae45':'#f5822b');
+      lin(cx,b-h,cx,b-h-6,'#2a1810');poly([[cx,b-h-6],[cx+6,b-h-5],[cx,b-h-3]],'#a21e1a');};
+    const pavilhao=(cx,b,w,h)=>{for(let y=Math.round(b-h*.5);y<=b;y++)for(let x=Math.round(cx-w/2);x<=cx+w/2;x++)px(x,y,Math.floor((x-cx+w)/5)%2?'#4a0e16':'#2a0810');
+      lin(cx+w/2,b-h*.5,cx+w/2,b,'#ff8a3a');
+      poly([[cx-w/2-4,b-h*.5+1],[cx,b-h],[cx+w/2+4,b-h*.5+1]],(x,y)=>x>cx?'#5a1218':'#34090f');lin(cx,b-h,cx+w/2+4,b-h*.5+1,'#ffae45');
+      lin(cx-w/2-4,b-h*.5+1,cx+w/2+4,b-h*.5+1,'#c08040');
+      poly([[cx-5,b],[cx,b-h*.38],[cx+5,b]],(x,y)=>dt(x,y)<.5?'#ffd577':'#ffae45');
+      lin(cx,b-h,cx,b-h-10,'#2a1810');poly([[cx,b-h-10],[cx+10,b-h-8],[cx+5,b-h-7],[cx+10,b-h-5],[cx,b-h-5]],'#c08a20');};
+    tenda(40,rm(40)+14,30,22);tenda(250,rm(250)+12,26,19);tenda(350,rm(350)+10,22,16);tenda(96,rm(96)+20,34,26);
+    pavilhao(176,182,44,46);tenda(232,186,30,24);
+    const estandarte=(x,b,h,cor,emb)=>{lin(x,b,x,b-h,'#2a1810');px(x,b-h-1,'#ffb070');lin(x-6,b-h+2,x+6,b-h+2,'#2a1810');
+      poly([[x-5,b-h+3],[x+6,b-h+3],[x+6,b-h+22],[x+0.5,b-h+17],[x-5,b-h+22]],(xx,yy)=>dt(xx,yy)<.2?'#14040c':cor);lin(x+6,b-h+3,x+6,b-h+21,'#ffb070');
+      elip(x,b-h+10,2,2,emb);};
+    [[124,'#7a1418','#ffae45'],[140,'#9a6a18','#2a0810'],[212,'#1c2e5e','#c0c8e0'],[268,'#1e4a26','#c08a20'],[300,'#46205e','#ffd577']]
+      .forEach(([x,cor,emb],i)=>estandarte(x,gf(x)+2,44-i%2*6,cor,emb));
+    const fogueira=(x,y)=>{elip(x,y+1,16,4,(xx,yy)=>dt(xx,yy)<.45?'#6a2410':null);lin(x-4,y+1,x+4,y-1,'#2a1008',2);lin(x-4,y-1,x+4,y+1,'#2a1008',2);
+      poly([[x-4,y],[x-1,y-9],[x+1,y-5],[x+3,y-11],[x+4,y]],'#ff7a2a');poly([[x-2,y],[x,y-5],[x+2,y]],'#ffd577');
+      for(let i=0;i<40;i++){const yy=y-12-i*1.4,xx=x-i*.35+Math.sin(i*.5)*2;if(dt(Math.round(xx),Math.round(yy))<.5-i/100)px(xx,yy,'#4a1a1e');}};
+    fogueira(66,200);fogueira(300,198);
+    // armas encostadas num cavalete, escudos no chão, alguns feridos
+    lin(20,196,20,182,'#2a1810',2);lin(52,196,52,182,'#2a1810',2);lin(18,184,54,184,'#3a2010',2);
+    for(let x=22;x<52;x+=5){lin(x,198,x+5,172,'#3a2a32');px(x+5,171,'#ffb070');px(x+5,170,'#ffd8a0');}
+    for(const [x,y] of [[118,204],[136,208],[330,206],[352,210]]){elip(x,y,5,4,'#2a0e12');lin(x-4,y-3,x+4,y-3,'#c0481e');px(x,y,'#d08a40');}
+    for(const [x,dy,dir] of [[24,14,1],[364,12,-1]])corpo(x,gf(x)+dy,dir);
+    for(const [x,len,ang] of [[150,18,.2],[256,16,-.25],[318,20,.15]])espada(x,gf(x)+4,len,ang,1);
+  }
+  if(cena==='carregar'){
+    // o monólito das crônicas, com runas acesas, e corvos no topo
+    {const x0=124,B=186,T=78,hw=y=>5+(y-T)/(B-T)*4;
+     for(let y=T-9;y<=B;y++){const w=y<T?(y-(T-9))/9*5:hw(y);for(let x=Math.round(x0-w);x<=Math.round(x0+w);x++){
+       const borda=x===Math.round(x0-w);px(x,y,borda?pal(CEU,11.2-Math.abs(y-SY)/11,x,y):dt(x,y)<.2?'#2c0c12':'#22080e');}
+       if(y>=T)px(Math.round(x0+hw(y)),y,'#14050a');}
+     for(let y=T+8;y<B-12;y+=8)for(let a=0;a<3;a++)for(let b=0;b<5;b++)if(rnd()<.55)px(x0-1+a,y+b,b%2?'#ffae45':'#ffd577'); // runas
+     for(const [x,y] of [[x0-1,T-11],[x0+3,T-7]]){px(x,y,'#0c0306');px(x+1,y,'#0c0306');px(x,y-1,'#0c0306');px(x+2,y-1,'#0c0306');}
+     for(const [x,y,w,h] of [[x0+10,B,9,4],[x0-16,B+1,7,3]])poly([[x,y],[x+w,y],[x+w-1,y-h],[x+1,y-h]],(xx,yy)=>yy===Math.round(y-h)?'#a8301c':'#22080e');}
+    // fileiras de espadas cravadas como túmulos, cada vez maiores para a frente
+    for(const [y0,n,len,xa,xb] of [[rm(250)+4,13,7,168,380],[rm(250)+14,10,11,160,384],[0,7,17,150,384]])
+      for(let i=0;i<n;i++){const x=xa+(xb-xa)*(i+.5)/n+(rnd()-.5)*6,y=y0||gf(x)+8;espada(x,y0?y0+(rnd()-.5)*2:y,len,(rnd()-.5)*.25,len>15?2:1);}
+    // o elmo de um titã, meio enterrado na frente
+    {const x=318,y=Math.round(gf(318))+12,rx=34,ry=28;
+     elip(x,y,rx,ry,(xx,yy)=>{if(yy>y)return null;const nx=(xx-x)/rx,ny=(yy-y)/ry;
+       if(Math.abs(nx*nx+ny*ny-1)<.09&&xx<x)return pal(CEU,10.2-Math.abs(yy-SY)/14,xx,yy);
+       if(Math.abs(xx-x)<2)return xx<x?'#6a2418':'#14050a';return dt(xx,yy)<(xx<x?.35:.12)?'#3a161c':'#1e0a0e';});
+     for(let i=-rx+4;i<=rx-4;i++)if(Math.abs(i)>2)px(x+i,y-11,'#0e0306');
+     poly([[x-22,y-8],[x-4,y-8],[x-4,y-5],[x-22,y-5]],'#050102');poly([[x+4,y-8],[x+22,y-8],[x+22,y-5],[x+4,y-5]],'#050102');
+     poly([[x-3,y-8],[x+3,y-8],[x+3,y],[x-3,y]],'#050102');px(x-14,y-7,'#ff7a2a');
+     for(let i=0;i<=16;i++){const t=i/16,hx=x-rx+2-t*14,hy=y-14-t*20+t*t*12;px(hx,hy,'#c0481e');px(hx+1,hy,'#1e0a0e');px(hx+1,hy+1,'#1e0a0e');}}
+    // um estandarte grande caído no chão, à esquerda, e ossos espalhados
+    lin(10,214,96,196,'#2a1810',2);
+    poly([[40,207],[92,197],[96,206],[86,212],[70,210],[52,214],[38,214]],(xx,yy)=>(xx+yy*2)%7===0?'#4a0a10':dt(xx,yy)<.3?'#8a1a1a':'#6a0e16');
+    lin(40,207,92,197,'#c0481e');elip(66,207,3,2,'#c08a20');
+    for(const [x,y] of [[20,200],[104,206],[140,212],[196,208]]){lin(x,y,x+6,y-1,'#8a6a5a');px(x-1,y,'#b09080');px(x+7,y-1,'#b09080');}
+    corpo(220,gf(220)+18,-1);
+  }
 
   // brasas e cinzas subindo
-  for(let i=0;i<90;i++){const x=rnd()*W,y=50+rnd()*150,cor=['#ffb045','#ff7a2a','#ffd577','#c8361c'][i%4];px(x,y,cor);if(rnd()<.3)px(x,y+1,'#7c1218');}
+  for(let i=0;i<90;i++){const x=rnd()*W,y=50+rnd()*150,cor=(cena==='carregar'?['#ffb045','#6a4a4a','#8a6a62','#c8361c']:['#ffb045','#ff7a2a','#ffd577','#c8361c'])[i%4];px(x,y,cor);if(rnd()<.3)px(x,y+1,'#7c1218');}
 
   // vinheta pontilhada nas bordas
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const vx=(x-W/2)/(W/2),vy=(y-H*.45)/(H*.62),v=vx*vx*.55+vy*vy*.5;
     if(dt(x,y)<v-.32){const i=(y*W+x)*4;D[i]*=.55;D[i+1]*=.55;D[i+2]*=.55;}}
   g.putImageData(img,0,0);
-  return fundoMenuURL=c.toDataURL();
+  return fundosMenu[cena]=c.toDataURL();
 }
+// cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
+const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -1575,7 +1677,7 @@ function desenhaInicio(){
       <button class="grande" onclick="abrirCarregar(true)" ${temSave?'':'disabled'}>Carregar Jogo</button>
       ${cfgInicio?'':'<button onclick="fecharSaves()">Voltar ao jogo</button>'}
     </div>`;
-  try{el.style.setProperty('--fundoMenu',`url(${fundoMenu()})`);}catch(e){}
+  poeArte(el,'inicio');
   el.classList.remove('cfg');el.classList.add('tela','ini');el.style.display='block';
 }
 // Jogar: partida 1x1 clássica, com o último mestre escolhido (as opções salvas não mudam)
@@ -1592,7 +1694,7 @@ function desenhaConfig(){
     h+=`<button class="${id===cfgSel.ordem?'pri':''}" onclick="cfgSel.ordem='${id}';desenhaConfig()">${iconeSpr(o.esp,TOQUE()?64:84,'cor')}<span class="txt"><b>${o.nome}</b><small>Força Elemental: ${o.forca.map(e=>`<span style="color:${EL[e]}">${ELN[e]}</span>`).join(', ')}</small><small class="desc">${o.desc}</small></span></button>`;
   h+=`</div>
     <div class="linha"><button onclick="desenhaInicio()">Voltar</button><button class="pri" onclick="comecarJogo()">Começar</button></div>`;
-  el.innerHTML=h;el.classList.remove('ini');el.classList.add('cfg','tela');el.style.display='block';
+  el.innerHTML=h;el.classList.remove('ini');el.classList.add('cfg','tela');poeArte(el,'batalha');el.style.display='block';
 }
 function comecarJogo(){gravaPrefs(cfgSel);fecharSaves();novoJogo(cfgSel);}
 // para onde cada desenho do atlas olha (1 = direita, -1 = esquerda; os de frente contam como direita)
