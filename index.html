@@ -10,8 +10,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Senhores do Véu">
-<title>Senhores do Véu</title>
+<meta name="apple-mobile-web-app-title" content="Senhores da Guerra">
+<title>Senhores da Guerra</title>
 <style>
 @font-face{font-family:"Pirata One";src:url(fontes/PirataOne.woff2) format("woff2");font-display:block} /* títulos das cenas; OFL, ver fontes/OFL-PirataOne.txt */
 :root{--bg:#14161c;--panel:#1d2029;--line:#2e3340;--txt:#e6e8ee;--dim:#9aa1b2;--p0:#4aa8ff;--p1:#ff5b52;--p2:#f2b335;--acc:#f2c14e}
@@ -414,6 +414,14 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
   padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
 #saves.tela>*{flex:none;width:100%;max-width:560px;align-self:center}
 #saves.tela .tituloJogo{display:block;font-size:24px;font-weight:700;letter-spacing:.03em;color:var(--acc);text-shadow:0 2px 10px #000a}
+#saves.tela.ini .tituloJogo{font-family:"Pirata One",serif;font-weight:400;font-size:min(80px,11vw);white-space:nowrap;max-width:none;line-height:1;letter-spacing:.02em;margin-bottom:clamp(20px,6vh,48px);
+  background:linear-gradient(180deg,#fff3c4 0%,#ffd36a 45%,#c8861e 75%,#8a5512 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 0 #3a2208) drop-shadow(0 6px 18px #000c)}
+#saves.cfg .tituloJogo{font-family:"Pirata One",serif;font-weight:400;letter-spacing:.02em}
+#saves .menuIni{display:flex;flex-direction:column;gap:12px;max-width:380px}
+#saves .menuIni button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 18px}
+#saves.tela .menuIni button.grande{min-height:58px;padding:12px 18px;justify-content:center;font-family:"Pirata One",serif;font-size:26px;letter-spacing:.04em}
+#saves .menuIni button:disabled{opacity:.5}
 #saves.cfg .subt{display:none}
 #saves.cfg .mestres{flex:0 1 auto;min-height:0;width:100%;max-width:920px;display:grid;gap:6px;margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));grid-auto-rows:1fr}
 #saves.cfg .mestres button{min-height:0;overflow:hidden;background:#1d2029cc}
@@ -434,6 +442,9 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 .paisagem #saves.cfg .mestres{flex:1 1 0;grid-template-columns:repeat(5,1fr);max-width:none}
 .paisagem #saves.tela>*{max-width:none}
 .paisagem #saves.tela .tituloJogo{font-size:19px}
+#saves.tela>.menuIni{max-width:380px}
+.paisagem #saves.tela.ini .tituloJogo{font-size:56px;margin-bottom:14px}
+.paisagem #saves .menuIni{gap:8px}.paisagem #saves.tela .menuIni button.grande{min-height:46px;padding:6px 18px;font-size:22px}
 
 /* ---------- Menu de invocação: grade de cartões, sem rolagem. No PC abre ao lado da construção; no toque, no meio do mapa ---------- */
 #menuM.grade{width:350px}
@@ -452,7 +463,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 <div id="app">
   <div id="colMapa">
   <div class="barra-mapa" id="topoMapa">
-    <div><h1><span class="nomeJogo">Senhores do Véu</span><button class="bt" id="btJogo" onclick="alternaMenuJogo(event)" title="Novo jogo, salvar e carregar">☰</button><button class="bt" onclick="abreAjuda()" title="Como jogar">?</button></h1><div class="vez" id="vez"></div></div>
+    <div><h1><span class="nomeJogo">Senhores da Guerra</span><button class="bt" id="btJogo" onclick="alternaMenuJogo(event)" title="Menu principal, salvar e carregar">☰</button><button class="bt" onclick="abreAjuda()" title="Como jogar">?</button></h1><div class="vez" id="vez"></div></div>
     <div id="relogio" title=""></div>
     <div id="zoomUI"><button onclick="mudaZoom(-1)" title="Afastar (−)">−</button><span id="zoomN">160%</span><button onclick="mudaZoom(1)" title="Aproximar (+)">+</button><button onclick="seguir(mestreDe(0),true)" title="Centralizar no seu mestre">⌖</button></div>
     <div id="menuJogo"></div>
@@ -476,12 +487,12 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
       <p><b>Terrenos:</b> cada mapa tem um tema (vale, costa, terras áridas, caldeira vulcânica ou fiorde glacial). Passe o mouse num hexágono para ver como ele afeta a criatura selecionada: custo de movimento, evasão e ataque.</p>
       <p>Clique numa unidade sua e depois numa casa azul para movê-la. Inimigos em vermelho podem ser atacados: os de borda contínua estão ao lado; nos tracejados, a criatura anda sozinha até uma casa vizinha e ataca. Todo ataque é corpo a corpo.</p>
       <p>Clique no seu mestre para abrir o menu dele: Mover, Atacar, Magia ou Força Elemental.</p>
-      <p><b>Magia:</b> as magias do seu mestre são liberadas quando você conquista a sua primeira torre (o mestre inimigo segue a mesma regra). Cada mestre tem 9 magias comuns e 2 da sua ordem (escolhida no novo jogo), e lança <b>uma magia por turno</b>, em qualquer momento, desde que tenha MP. Em Magia abre a lista das magias que têm algum alvo agora (Cura só aparece se houver criatura sua ferida, e assim por diante). Escolha uma e clique no alvo destacado em roxo; as que pegam uma área grande mostram a área e pedem confirmação. Esc volta à lista. Mestres nunca são afetados por magias. Marcas no mapa: <b>S</b> Sono, <b>P</b> Petrificada, <b>B</b> Barreira, <b>L</b> Passo Largo, <b>F</b> Fúria, <b>D</b> Dominada.</p>
+      <p><b>Magia:</b> as magias do seu mestre são liberadas quando você conquista a sua primeira torre (o mestre inimigo segue a mesma regra). Cada mestre tem 9 magias comuns e 2 da sua ordem (escolhida em Preparar Batalha), e lança <b>uma magia por turno</b>, em qualquer momento, desde que tenha MP. Em Magia abre a lista das magias que têm algum alvo agora (Cura só aparece se houver criatura sua ferida, e assim por diante). Escolha uma e clique no alvo destacado em roxo; as que pegam uma área grande mostram a área e pedem confirmação. Esc volta à lista. Mestres nunca são afetados por magias. Marcas no mapa: <b>S</b> Sono, <b>P</b> Petrificada, <b>B</b> Barreira, <b>L</b> Passo Largo, <b>F</b> Fúria, <b>D</b> Dominada.</p>
       <p><b>Força Elemental:</b> é liberada quando você conquista a sua segunda torre (o mestre inimigo segue a mesma regra). Depois disso, uma vez por turno, por 40 MP, um elemental da sua ordem ataca qualquer criatura inimiga do mapa e enfrenta o revide. O elemental é feito para derrubar gigantes: contra nível 0 causa metade do dano, contra nível 1 três quartos, e contra nível 2, 3 e mestres o dano é cheio. Ele começa com 100 de vida, não se cura durante a partida e, se morrer, não volta. A Força Elemental não gasta a magia do turno.</p>
       <p>Para invocar, clique numa construção sua (castelo, fortaleza ou torre) que esteja livre e ao lado do seu mestre. Elas ficam com borda dourada tracejada.</p>
       <p>Seu exército pode ter até 2 criaturas + 1 por torre que você controla. Ganhe torres (e MP) terminando o movimento sobre elas.</p>
       <p><b>Modos:</b> no <b>1 × 1</b> você enfrenta um mestre. No <b>1 × 1 × 1</b> são três mestres, todos contra todos (você e dois controlados pelo computador), num mapa maior com três castelos. Quando um mestre cai ou tem o castelo cercado, ele sai da partida: o exército dele se desfaz e as construções dele ficam sem dono. Vence o último mestre de pé.</p>
-      <p><b>Torre do Cristal:</b> modo escolhido no novo jogo, junto do número de mestres. No centro do mapa há uma torre com um cristal desmontado. Quem termina o turno com uma unidade nela puxa o cabo de guerra: 1 ponto, mais 1 por cada outra torre que controla. Os cacos vão se juntando e o cristal ganha a cor de quem está montando. Se um rival toma a torre, ele primeiro desfaz o que estava montado e depois monta para si. Quem chegar a 50 vence na hora; derrotar o mestre ou cercar o castelo continuam valendo.</p>
+      <p><b>Torre do Cristal:</b> modo escolhido em Preparar Batalha, junto do número de mestres. No centro do mapa há uma torre com um cristal desmontado. Quem termina o turno com uma unidade nela puxa o cabo de guerra: 1 ponto, mais 1 por cada outra torre que controla. Os cacos vão se juntando e o cristal ganha a cor de quem está montando. Se um rival toma a torre, ele primeiro desfaz o que estava montado e depois monta para si. Quem chegar a 50 vence na hora; derrotar o mestre ou cercar o castelo continuam valendo.</p>
       <p><b>Mana:</b> no início do turno você ganha +15 por torre e +5 por fortaleza ou castelo, e paga a manutenção das criaturas (3, 6 ou 10 por nível). A sobra vai para a reserva, que guarda no máximo 300 MP (o que passar disso se perde); o que faltar sai dela. Com a reserva zerada, as criaturas sem pagamento ficam enfraquecidas (selo roxo) e, se o déficit continuar, uma delas debanda a cada turno.</p>
       <p><b>Dicas:</b> use Gatos Alados, rápidos e voadores, para tomar torres neutras logo no início. Não deixe criaturas paradas à toa, porque elas custam manutenção. Tomar torres do mestre inimigo corta a renda dele e o limite do exército.</p>
       <p><b>Evoluir na criação:</b> quando sua reserva chega a 200 MP, o menu do mestre ganha <b>Evoluir</b>. Escolha uma criatura inicial e o jogo oferece duas formas de estágio 1, conforme o que seu exército mais viveu na partida (horário dos ataques, dano feito e sofrido, terrenos, turnos parados ou correndo, feridos, abates). A escolhida custa 200 MP e fica fixa: daí em diante, invocar aquela criatura já traz a forma evoluída, pelo custo dela.</p>
@@ -1386,7 +1397,7 @@ function exportarSaves(){
   const d={jogo:'senhoresDoVeu',v:SAVE_VER,manual:lerSave('manual'),auto:lerSave('auto')};
   const ref=d.manual||d.auto;if(!ref)return;
   const a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:'application/json'}));
-  a.href=url;a.download=`senhores-do-veu-turno${ref.turno}.json`;
+  a.href=url;a.download=`senhores-da-guerra-turno${ref.turno}.json`;
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
 function importarSaves(daConfig){
@@ -1408,35 +1419,50 @@ async function lerArquivoSave(f,daConfig=false){
 }
 function abrirCarregar(daConfig=false,aviso=''){
   const el=document.getElementById('saves'),man=lerSave('manual'),aut=lerSave('auto');
-  el.classList.remove('cfg');el.classList.toggle('tela',!!daConfig); // vindo da tela inicial, continua em tela cheia
+  el.classList.remove('cfg','ini');el.classList.toggle('tela',!!daConfig); // vindo da tela inicial, continua em tela cheia
   let h=`<div><strong>Carregar jogo</strong></div>${daConfig?'':'<div class="vez">O jogo atual será substituído.</div>'}<div class="col">`;
   h+=man?`<button onclick="carregar('manual')"><b>Salvo</b><small>${descSave(man)}</small></button>`:'<div class="vez">Nenhum jogo salvo manualmente.</div>';
   if(aut)h+=`<button onclick="carregar('auto')"><b>Automático</b><small>${descSave(aut)}</small></button>`;
   h+=`</div>${aviso?`<div class="vez" style="margin-top:8px;color:var(--acc)">${aviso}</div>`:''}
     <div class="linha"><button onclick="exportarSaves()" ${man||aut?'':'disabled'} title="Baixa um arquivo com os jogos salvos, para guardar ou levar a outro aparelho">⇪ Exportar arquivo</button><button onclick="importarSaves(${daConfig})" title="Lê um arquivo exportado; substitui os jogos salvos neste aparelho">⇩ Importar arquivo</button></div>
-    <div class="vez" style="margin-top:6px">Os jogos ficam salvos neste navegador. Exporte para guardar uma cópia ou continuar em outro aparelho.</div><div class="linha"><button onclick="${daConfig?'desenhaConfig()':'fecharSaves()'}">${daConfig?'Voltar':'Cancelar'}</button></div>`;
+    <div class="vez" style="margin-top:6px">Os jogos ficam salvos neste navegador. Exporte para guardar uma cópia ou continuar em outro aparelho.</div><div class="linha"><button onclick="${daConfig?'desenhaInicio()':'fecharSaves()'}">${daConfig?'Voltar':'Cancelar'}</button></div>`;
   el.innerHTML=h;el.style.display='block';
 }
-function fecharSaves(){const el=document.getElementById('saves');el.style.display='none';el.classList.remove('cfg','tela');}
+function fecharSaves(){const el=document.getElementById('saves');el.style.display='none';el.classList.remove('cfg','tela','ini');}
 // tela de novo jogo: escolha do mestre (cada um com sua miniatura, força e magias exclusivas)
 let cfgSel=null,cfgInicio=false;
+// tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
+// inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
   fechaMenuJogo();document.getElementById('fim').style.display='none';
-  cfgSel={...prefs()};cfgInicio=inicio;desenhaConfig();
+  cfgSel={...prefs()};cfgInicio=inicio||!J||J.fim;desenhaInicio();
 }
+function desenhaInicio(){
+  const el=document.getElementById('saves'),temSave=!!(lerSave('manual')||lerSave('auto'));
+  el.innerHTML=`<div class="tituloJogo">Senhores da Guerra</div>
+    <div class="menuIni">
+      <button class="pri grande" onclick="jogarRapido()">Jogar</button>
+      <button class="grande" onclick="desenhaConfig()">Preparar Batalha</button>
+      <button class="grande" onclick="abrirCarregar(true)" ${temSave?'':'disabled'}>Carregar Jogo</button>
+      ${cfgInicio?'':'<button onclick="fecharSaves()">Voltar ao jogo</button>'}
+    </div>`;
+  el.classList.remove('cfg');el.classList.add('tela','ini');el.style.display='block';
+}
+// Jogar: partida 1x1 clássica, com o último mestre escolhido (as opções salvas não mudam)
+function jogarRapido(){fecharSaves();novoJogo({...prefs(),modo:'1x1',cristal:false});}
 function desenhaConfig(){
   const el=document.getElementById('saves');
   // tela cheia (classe "tela"), com o nome do jogo no alto
   const tres=cfgSel.modo==='1x1x1';
-  let h=`<div class="tituloJogo">Senhores do Véu</div><div class="subt"><strong>Novo jogo</strong></div>
+  let h=`<div class="tituloJogo">Preparar Batalha</div><div class="subt"><strong>Preparar Batalha</strong></div>
     <div class="modos"><button class="${tres?'':'pri'}" onclick="cfgSel.modo='1x1';desenhaConfig()"><b>1 × 1</b><small>Você contra um mestre</small></button><button class="${tres?'pri':''}" onclick="cfgSel.modo='1x1x1';desenhaConfig()"><b>1 × 1 × 1</b><small>Todos contra todos, 3 mestres</small></button></div>
     <div class="modos"><button class="${cfgSel.cristal?'':'pri'}" onclick="cfgSel.cristal=false;desenhaConfig()"><b>⚔ Clássico</b><small>Derrote o mestre ou cerque o castelo</small></button><button class="${cfgSel.cristal?'pri':''}" onclick="cfgSel.cristal=true;desenhaConfig()"><b>💎 Torre do Cristal</b><small>Cabo de guerra pela torre do centro</small></button></div>
     <div class="vez">Escolha seu mestre. ${tres?'Os dois rivais recebem outros, sorteados.':'O inimigo recebe outro, sorteado.'}</div><div class="mestres">`;
   for(const [id,o] of Object.entries(ORDENS))
     h+=`<button class="${id===cfgSel.ordem?'pri':''}" onclick="cfgSel.ordem='${id}';desenhaConfig()">${iconeSpr(o.esp,TOQUE()?64:84,'cor')}<span class="txt"><b>${o.nome}</b><small>Força Elemental: ${o.forca.map(e=>`<span style="color:${EL[e]}">${ELN[e]}</span>`).join(', ')}</small><small class="desc">${o.desc}</small></span></button>`;
   h+=`</div>
-    <div class="linha"><button class="pri" onclick="comecarJogo()">Começar</button>${lerSave('manual')||lerSave('auto')?'<button onclick="abrirCarregar(true)">📂 Carregar jogo salvo</button>':''}${cfgInicio?'':'<button onclick="fecharSaves()">Cancelar</button>'}</div>`;
-  el.innerHTML=h;el.classList.add('cfg','tela');el.style.display='block';
+    <div class="linha"><button onclick="desenhaInicio()">Voltar</button><button class="pri" onclick="comecarJogo()">Começar</button></div>`;
+  el.innerHTML=h;el.classList.remove('ini');el.classList.add('cfg','tela');el.style.display='block';
 }
 function comecarJogo(){gravaPrefs(cfgSel);fecharSaves();novoJogo(cfgSel);}
 // para onde cada desenho do atlas olha (1 = direita, -1 = esquerda; os de frente contam como direita)
@@ -4208,7 +4234,7 @@ function atualiza(){
   const c0=cercoContra(0),c1=cercoDe(0); // c0: o rival que mais cerca você (c0.por); c1: o seu cerco mais adiantado (c1.o)
   // menu do jogo (☰): novo jogo, salvar e carregar
   document.getElementById('menuJogo').innerHTML=`
-    <button onclick="abreConfig()">↻ Novo jogo</button>
+    <button onclick="abreConfig()">↻ Menu principal</button>
     <button onclick="fechaMenuJogo();salvarJogo()" ${podeSalvar()?'':'disabled'}>💾 Salvar</button>
     <button onclick="fechaMenuJogo();abrirCarregar()" ${J.ocupado?'disabled':''}>📂 Carregar</button>
     <button onclick="event.stopPropagation();mudaModoCena()" title="Tela que mostra cada combate">⚔ Tela de combate: ${MODOS_CENA[modoCena()]}</button>

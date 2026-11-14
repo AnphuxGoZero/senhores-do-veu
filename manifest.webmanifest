@@ -1,6 +1,6 @@
 {
-  "name": "Senhores do Véu",
-  "short_name": "Senhores do Véu",
+  "name": "Senhores da Guerra",
+  "short_name": "Senhores da Guerra",
   "description": "Estratégia por turnos em mapa hexagonal: invoque criaturas, capture torres e derrote o mestre inimigo.",
   "lang": "pt-BR",
   "start_url": "./",

@@ -1,4 +1,4 @@
-// Service worker de "Senhores do Véu": deixa o jogo instalável e jogável sem internet.
+// Service worker de "Senhores da Guerra": deixa o jogo instalável e jogável sem internet.
 //
 // Estratégia: rede primeiro, cache como reserva.
 //  - com internet, o jogo sempre abre na versão mais nova publicada (e ela vai para o cache);
