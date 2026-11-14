@@ -5,8 +5,9 @@
 //  - sem internet, ou se a rede demorar demais, abre a última versão guardada.
 // Por isso não é preciso mexer neste arquivo a cada atualização do jogo: basta publicar o index.html novo.
 // Só troque o número em CACHE se mudar a lista ARQUIVOS ou quiser forçar a limpeza do cache antigo.
-const CACHE = 'senhores-do-veu-v2';
-const ARQUIVOS = ['./', 'index.html', 'manifest.webmanifest', 'icones/icone-192.png', 'icones/icone-512.png', 'icones/icone-mask-512.png', 'icones/apple-180.png', 'fontes/PirataOne.woff2'];
+const CACHE = 'senhores-do-veu-v3';
+const ARQUIVOS = ['./', 'index.html', 'manifest.webmanifest', 'icones/icone-192.png', 'icones/icone-512.png', 'icones/icone-mask-512.png', 'icones/apple-180.png', 'fontes/PirataOne.woff2',
+  'img/atlas.png', 'img/atlas-cor.png', 'img/elementais.png'];
 const ESPERA_REDE = 4000; // ms: passou disso, usa o cache (a resposta da rede ainda atualiza o cache quando chegar)
 
 self.addEventListener('install', ev => {
@@ -31,7 +32,8 @@ async function redePrimeiro(req) {
   const cache = await caches.open(CACHE);
   // 'no-cache' = sempre pergunta ao servidor se mudou (resposta curta quando não mudou)
   const daRede = fetch(req, { cache: 'no-cache' }).then(resp => {
-    if (resp.ok) cache.put(req, resp.clone());
+    // guarda sem o ?v=...: cada arquivo ocupa um lugar só no cache, e a versão nova substitui a antiga
+    if (resp.ok) cache.put(req.url.split('?')[0], resp.clone());
     return resp;
   });
   const doCache = async () =>
