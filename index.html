@@ -437,8 +437,29 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 #saves.tela.arte[data-cena=carregar]{background:linear-gradient(180deg,#0008 0%,#0003 35%,#0004 65%,#000b 100%),var(--fundoMenu,none) var(--fundoX,50%) 72%/cover no-repeat,#14040c}
 #saves.tela.arte .vez{text-shadow:0 1px 3px #000}
 #saves.tela.arte.ini{justify-content:space-between;background:linear-gradient(180deg,#0007 0%,#0000 28%,#0000 52%,#000b 100%),var(--fundoMenu,none) var(--fundoX,50%) 72%/cover no-repeat,#14040c}
-#saves.tela.ini .tituloJogo{margin-top:clamp(10px,6vh,64px)}
-#saves.tela.ini>.menuIni{margin-bottom:clamp(10px,7vh,72px)}
+/* título da abertura em três andares: "Senhores", um "da" pequeno entre filetes dourados, e "Guerra" maior;
+   desce um pouco do topo, e os botões sobem do rodapé */
+#saves.tela.ini .tituloJogo{margin-top:clamp(18px,11vh,130px);display:flex;flex-direction:column;align-items:center;white-space:normal;
+  background:none;-webkit-background-clip:border-box;background-clip:border-box;color:inherit}
+#saves.tela.ini .tituloJogo .tl1,#saves.tela.ini .tituloJogo .tl2{display:block;line-height:.92;
+  background:linear-gradient(180deg,#fff3c4 0%,#ffd36a 45%,#c8861e 75%,#8a5512 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+#saves.tela.ini .tituloJogo .tl1{font-size:min(84px,17vw)}
+#saves.tela.ini .tituloJogo .tl2{font-size:min(118px,24vw);letter-spacing:.04em}
+#saves.tela.ini .tituloJogo .tlDa{display:flex;align-items:center;gap:.5em;font-size:min(30px,6.5vw);line-height:1;margin:.12em 0 .02em;color:#ffd36a}
+#saves.tela.ini .tituloJogo .tlDa::before,#saves.tela.ini .tituloJogo .tlDa::after{content:"";width:min(110px,22vw);height:2px;border-radius:2px}
+#saves.tela.ini .tituloJogo .tlDa::before{background:linear-gradient(90deg,#ffd36a00,#ffd36a)}
+#saves.tela.ini .tituloJogo .tlDa::after{background:linear-gradient(90deg,#ffd36a,#ffd36a00)}
+#saves.tela.ini>.menuIni{margin-bottom:clamp(24px,15vh,170px)}
+/* tela baixa (celular deitado): o título volta a uma linha só, e os botões ficam mais compactos */
+@media (max-height:560px){
+  #saves.tela.ini .tituloJogo{flex-direction:row;justify-content:center;align-items:center;gap:.3em;margin-top:clamp(8px,5vh,40px)}
+  #saves.tela.ini .tituloJogo .tl1,#saves.tela.ini .tituloJogo .tl2{font-size:min(64px,15vh,9vw);letter-spacing:.02em}
+  #saves.tela.ini .tituloJogo .tlDa{font-size:min(26px,6vh);margin:0;gap:.3em}
+  #saves.tela.ini .tituloJogo .tlDa::before,#saves.tela.ini .tituloJogo .tlDa::after{width:min(28px,4vw)}
+  #saves.tela .menuIni{gap:8px}
+  #saves.tela .menuIni button.grande{min-height:44px;padding:6px 18px;font-size:22px}
+  #saves.tela.ini>.menuIni{margin-bottom:clamp(8px,6vh,40px)}
+}
 #saves.cfg .subt{display:none}
 #saves.cfg .mestres{flex:0 1 auto;min-height:0;width:100%;max-width:920px;display:grid;gap:6px;margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));grid-auto-rows:1fr}
 #saves.cfg .mestres button{min-height:0;overflow:hidden;background:#1d2029cc}
@@ -1686,7 +1707,7 @@ function abreConfig(inicio=false){
 }
 function desenhaInicio(){
   const el=document.getElementById('saves'),temSave=!!(lerSave('manual')||lerSave('auto'));
-  el.innerHTML=`<div class="tituloJogo">Senhores da Guerra</div>
+  el.innerHTML=`<div class="tituloJogo" aria-label="Senhores da Guerra"><span class="tl1">Senhores</span><span class="tlDa">da</span><span class="tl2">Guerra</span></div>
     <div class="menuIni">
       <button class="pri grande" onclick="jogarRapido()">Jogar</button>
       <button class="grande" onclick="desenhaConfig()">Preparar Batalha</button>
@@ -3721,6 +3742,7 @@ function camadaTerreno(){
     if(t==='vulc')vulc.push(k);
   }
   muralhas(); // depois de todos os hexágonos, para nada pintar por cima das torres de canto
+  bordaCristal();
   ctx=real;
   const g=cinza.getContext('2d');g.clearRect(0,0,w,h);pintaCinza(g,cor,.62);
   return cacheTer={j:J,chave,cor,cinza,vulc};
@@ -3802,6 +3824,69 @@ const PAL_ICO={
   3:{luz:'#d39b5c',meio:'#9a673b',sombra:'#64411f',escuro:'#3a2410',cont:'#170d05',palha:'#e0c065',palhaE:'#a5842f',jan:'#1e1208'},
 };
 const ICO_CACHE={};
+// ---------- Torre do Cristal (pixel art própria) ----------
+// Mais alta que as torres comuns: coluna afunilada de pedra azulada com veios brilhantes, sobre um pedestal
+// em degraus, e no topo uma plataforma com três garras que seguram o cristal (o cristal é desenhado à parte,
+// em desenhaCristal, flutuando entre as garras). 34×52 pixels, desenhada 1,5× como os outros ícones.
+const PAL_CRISTAL={brilho:'#dfe7f2',luz:'#aab6ca',meio:'#7c889e',sombra:'#4c566b',escuro:'#2c3243',cont:'#11131b',veio:'#7fd8ff',veioC:'#c9f1ff'};
+let ICO_CRISTAL=null;
+function iconeCristal(){
+  if(ICO_CRISTAL)return ICO_CRISTAL;
+  const c=document.createElement('canvas');c.width=34;c.height=52;const g=c.getContext('2d'),P=PAL_CRISTAL;
+  const px=(x,y,cor)=>{if(cor){g.fillStyle=cor;g.fillRect(17+x,y,1,1);}};
+  // linha de pedra de x0 a x1 (luz à esquerda, sombra à direita), com contorno nas pontas
+  const faixa=(y,x0,x1,topo=false,fiada=false)=>{for(let x=x0;x<=x1;x++){
+    let cor=x<=x0+1?P.luz:x>=x1-1?P.sombra:P.meio;
+    if(topo)cor=x>=x1-1?P.luz:P.brilho;
+    if(fiada&&x>x0&&x<x1)cor=x>=x1-2?P.escuro:P.sombra;
+    if(x===x0||x===x1)cor=P.cont;px(x,y,cor);}};
+  // pedestal em três degraus
+  for(let y=45;y<=50;y++){const m=y>=49?10:y>=47?9:8;faixa(y,-m,m,y===45||y===47||y===49);}
+  for(let x=-10;x<=10;x++)px(x,51,P.cont);
+  // coluna afunilada: meia largura 4 no alto, 7 embaixo; fiadas a cada 5 linhas
+  for(let y=15;y<=44;y++){const m=Math.round(4+(y-15)/29*3);faixa(y,-m,m,false,y%5===0);}
+  // veio brilhante descendo pela coluna, em zigue-zague
+  const veio=[[0,17],[0,18],[1,19],[1,20],[0,21],[-1,22],[-1,23],[0,24],[1,26],[1,27],[0,28],[0,29],[-1,31],[-2,32],[-1,33],[0,34],[1,36],[1,37],[2,38],[1,40],[0,41],[0,42]];
+  veio.forEach(([x,y],i)=>px(x,y,i%4===0?P.veioC:P.veio));
+  for(const [x,y] of [[-3,30],[-3,37],[3,25],[4,33]])px(x,y,P.veio); // faíscas soltas
+  // gola e plataforma do topo
+  for(let y=12;y<=14;y++)faixa(y,y===12?-7:-6,y===12?7:6,y===12);
+  for(let x=-7;x<=7;x++)px(x,11,P.cont);
+  // três garras: duas na frente, curvadas para dentro, e uma atrás, mais escura
+  const garra=(pts,cor)=>pts.forEach(([x,y])=>{px(x,y,cor);});
+  garra([[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10]],P.sombra);px(0,3,P.cont);
+  for(const s of [-1,1]){
+    const pts=[[7,10],[7,9],[7,8],[6,7],[6,6],[5,5],[4,4]].map(([x,y])=>[x*s,y]);
+    pts.forEach(([x,y],i)=>{px(x,y,i<3?(s<0?P.luz:P.meio):(s<0?P.brilho:P.luz));px(x+s,y,P.cont);});
+    px(4*s,3,P.cont);px(3*s,4,P.cont);
+  }
+  return ICO_CRISTAL=c;
+}
+// faixa de lajes de pedra na borda dos 6 vizinhos da Torre do Cristal: só desenho, o terreno deles não muda
+function bordaCristal(){
+  const C=J.cristal;if(!C)return;
+  const [cc,cr]=DK(C.k),[x,y]=centro(cc,cr);
+  ctx.save();ctx.lineJoin='round';
+  for(const [a,b] of vizinhos(cc,cr)){
+    const [nx,ny]=centro(a,b),dx=(nx-x)/W,dy=(ny-y)/W,qx=-dy,qy=dx;   // d aponta para o vizinho; q corre ao longo da borda
+    const mx=x+dx*W/2,my=y+dy*W/2;
+    // calçamento contínuo na borda, com a beira de dentro irregular (pedras quebradas avançando sobre o vizinho)
+    const p=(t,f)=>[mx+qx*t*R+dx*f,my+qy*t*R+dy*f];
+    const sem=(a*7+b*13)%5,N=7,fundo=[];
+    for(let i=0;i<=N;i++)fundo.push(i===0||i===N?2:5+((i*3+sem)%4)*1.6);   // nas pontas afina até a quina
+    ctx.beginPath();ctx.moveTo(...p(-.5,0));ctx.lineTo(...p(.5,0));
+    for(let i=N;i>=0;i--)ctx.lineTo(...p(-.5+i/N,fundo[i]));
+    ctx.closePath();ctx.fillStyle='#7c889e';ctx.fill();
+    ctx.strokeStyle='rgba(17,19,27,.85)';ctx.lineWidth=1.1;ctx.stroke();
+    // juntas entre as pedras e um fio de luz na beira que encosta na torre
+    ctx.strokeStyle='rgba(44,50,67,.9)';ctx.lineWidth=.9;
+    for(const i of [2,4,6]){ctx.beginPath();ctx.moveTo(...p(-.5+i/N,0));ctx.lineTo(...p(-.5+i/N+.03,fundo[i]));ctx.stroke();}
+    ctx.strokeStyle='rgba(223,231,242,.5)';ctx.beginPath();ctx.moveTo(...p(-.45,1));ctx.lineTo(...p(.45,1));ctx.stroke();
+  }
+  // a torre é mais alta que a casa: redesenha por cima das lajes das bordas de cima, que encostam na coluna
+  ctx.imageSmoothingEnabled=false;ctx.drawImage(iconeCristal(),x-25.5,y+27.5-78,51,78);
+  ctx.restore();
+}
 function iconePx(est,tipo,corDono){
   const ch=est+tipo+(corDono||'');if(ICO_CACHE[ch])return ICO_CACHE[ch];
   const c=document.createElement('canvas');c.width=c.height=34;const g=c.getContext('2d'),P=PAL_ICO[est];
@@ -3980,6 +4065,8 @@ function decor(t,x,y,k){
     ctx.strokeStyle='#8fb7c9';ctx.lineWidth=1.3;
     ctx.beginPath();ctx.moveTo(x-12,y-4);ctx.lineTo(x-3,y);ctx.lineTo(x+2,y-7);ctx.moveTo(x-3,y);ctx.lineTo(x+1,y+9);ctx.lineTo(x+11,y+5);ctx.stroke();
     ctx.fillStyle='#ffffff';for(const [dx,dy] of [[8,-8],[-9,7]]){ctx.beginPath();ctx.moveTo(x+dx,y+dy-3);ctx.lineTo(x+dx+1,y+dy);ctx.lineTo(x+dx,y+dy+3);ctx.lineTo(x+dx-1,y+dy);ctx.fill();}
+  }else if(t==='torre'&&ehCristal(k)){
+    ctx.imageSmoothingEnabled=false;ctx.drawImage(iconeCristal(),x-25.5,y+27.5-78,51,78);
   }else if((t==='torre'||t==='fort')&&desenhaIcone(t,x,y)){
     // ícone em pixel art (estilo escolhido em estiloIcone)
   }else if(t==='torre'){
@@ -4326,11 +4413,16 @@ function desenhaCristal(now,porCima){
     ctx.lineWidth=4;ctx.strokeStyle='rgba(10,12,16,.75)';ctx.beginPath();ctx.arc(x,y,R-5,0,Math.PI*2);ctx.stroke();
     ctx.lineWidth=2.4;ctx.strokeStyle='rgba(190,198,210,.5)';ctx.beginPath();ctx.arc(x,y,R-5,0,Math.PI*2);ctx.stroke();
     if(p>0){ctx.strokeStyle=COR[C.lado];ctx.beginPath();ctx.arc(x,y,R-5,-Math.PI/2,-Math.PI/2+p*Math.PI*2);ctx.stroke();}
+    // a torre volta por cima do anel: o anel fica no chão, entre a base de pedra e a torre
+    // (fora do alcance da criatura selecionada, a casa está em cinza: a torre acompanha)
+    const cinza=J.alc&&!J.alc.dest.has(C.k)&&!menuAberto()&&!(ehMestreSel()&&(J.menuMestre==='atacar'||J.menuMestre==='invocar'));
+    if(cinza)ctx.filter='grayscale(.62)';
+    ctx.imageSmoothingEnabled=false;ctx.drawImage(iconeCristal(),x-25.5,y+27.5-78,51,78);
     ctx.restore();return;
   }
   const base=[150,158,170],alvo=C.lado!=null?rgbHex(COR[C.lado]):base,q=C.v>0?Math.min(1,.2+p):0;
   const mix=base.map((b,i)=>b+(alvo[i]-b)*q);
-  const cy=y-R*1.12+Math.sin(now/650)*1.5;
+  const cy=y-R*1.7+Math.sin(now/650)*1.5; // entre as garras do topo da torre
   if(p>0){
     const g=ctx.createRadialGradient(x,cy,1,x,cy,16+6*p);
     g.addColorStop(0,`rgba(${alvo.join(',')},${(.25+.45*p)*(.8+.2*Math.sin(now/300))})`);g.addColorStop(1,`rgba(${alvo.join(',')},0)`);
