@@ -33,6 +33,7 @@ body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,"Seg
 /* menu do mestre: cabeçalho com ✕ e grade de ações em cartões */
 #menuM .mmTopo{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding-bottom:6px;border-bottom:1px solid #2e3340}
 #menuM .mmX{width:auto;margin:0;padding:3px 9px;line-height:1.2}
+#menuM .btEvoInv{border-color:#3f7a50;color:#bff0cc}
 #menuM .acoes{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
 #menuM .acao.pisca:not(:disabled){animation:piscaInv 1.1s ease-in-out infinite;border-color:#f2c14e} /* 1ª invocação: chama o olho para o botão */
 @keyframes piscaInv{0%,100%{box-shadow:0 0 0 0 rgba(242,193,78,.0);background-color:#232836}50%{box-shadow:0 0 0 3px rgba(242,193,78,.55),0 0 14px rgba(242,193,78,.6);background-color:#3a3420}}
@@ -56,6 +57,12 @@ body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,"Seg
 /* PC: três colunas e sem rolagem (cabe a lista inteira) */
 .pc #menuM.magias{width:400px!important}
 .pc #menuM.magias .mgGrade{grid-template-columns:1fr 1fr 1fr;max-height:none;overflow:visible}
+/* poucas magias: a caixa encolhe para não sobrar coluna vazia, e o cartão sozinho não vira faixa deitada */
+#menuM .mgGrade .mgCarta:last-child:nth-child(odd){grid-column:auto;flex-direction:column;gap:1px;min-height:78px}
+#menuM.magias.mg1 .mgGrade{grid-template-columns:1fr}
+#menuM.magias.mg2 .mgGrade{grid-template-columns:1fr 1fr}
+.pc #menuM.magias.mg1,#menuM.magias.mg1{width:220px!important}
+.pc #menuM.magias.mg2,#menuM.magias.mg2{width:280px!important}
 #menuM .acao:disabled .ic{filter:grayscale(1);opacity:.5}
 #menuM .inv button{flex-direction:column;align-items:flex-start;gap:0}
 #menuM .inv button>span{display:flex;justify-content:space-between;width:100%}
@@ -158,6 +165,11 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 /* atalho da Magia ao lado do Encerrar turno: só aparece quando dá para lançar; brilha quando há magia com alvo */
 #btMagia{display:none;flex:none;color:#d9b8ff;border-color:#6a4a8a;font-size:15px}
 #btMagia.ativo{display:block}
+/* 👣 próxima criatura: só aparece enquanto há criatura sua que ainda não agiu; o número é quantas faltam */
+#btProx{display:none;flex:none;font-size:15px;white-space:nowrap}
+#btProx.ativo{display:block}
+#btProx b{margin-left:4px;font-size:13px;color:#f2c14e}
+.paisagem #btProx{background:#1d2029e6}
 #btMagia.brilha{animation:brilhaMagia 1.8s ease-in-out infinite}
 @keyframes brilhaMagia{0%,100%{box-shadow:0 0 0 0 #c58cff00}50%{box-shadow:0 0 12px 2px #c58cff99}}
 .paisagem #btMagia{background:#1d2029e6}
@@ -382,10 +394,9 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 .paisagem #linhaFim{position:fixed;right:8px;bottom:12px;z-index:6} /* longe da borda: no iPhone, tocar rente ao pé da tela é gesto do sistema */
 .paisagem #btCancela{bottom:12px}
 .paisagem #btLog{display:block;flex:none;background:#1d2029e6}
-.paisagem #btLog .rot{display:none}
 .paisagem #btFim{flex:none;padding:10px 16px;box-shadow:0 4px 14px #000a}
 /* ficha: faixa baixa no meio, entre o Cancelar (esquerda) e os botões da direita; some quando vazia */
-.paisagem #info{position:fixed;left:128px;right:214px;bottom:12px;z-index:4;min-height:0;max-height:96px;overflow-y:auto;
+.paisagem #info{position:fixed;left:128px;right:var(--dirBotoes,214px);bottom:12px;z-index:4;min-height:0;max-height:96px;overflow-y:auto;
   padding:5px 8px;font-size:11.5px;background:#1d2029ee;border-color:#3c4356;box-shadow:0 4px 18px #000b;display:flex;flex-direction:column;gap:4px}
 .paisagem #info.vazio{display:none}
 .paisagem #info>*{flex:none}
@@ -492,7 +503,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
   <div id="lado"><div id="ladoIn">
     <canvas id="mini" title="Mini mapa: clique ou arraste para mover a câmera"></canvas>
     <div class="cx" id="info"></div>
-    <div id="linhaFim"><button id="btLog" onclick="alternaLog(event)" aria-label="Registro">📜<span class="rot"> Registro</span></button><button id="btMagia" onclick="magiaDoBotao()" aria-label="Magia" title="Magia (atalho: M)">✦<span class="rot"> Magia</span></button><button class="pri" id="btFim" onclick="fimTurno()">Encerrar turno</button></div>
+    <div id="linhaFim"><button id="btLog" onclick="alternaLog(event)" aria-label="Registro" title="Registro">📜</button><button id="btProx" onclick="proximaCriatura()" aria-label="Próxima criatura" title="Próxima criatura que ainda não agiu (atalho: N)">👣<b id="btProxN"></b></button><button id="btMagia" onclick="magiaDoBotao()" aria-label="Magia" title="Magia (atalho: M)">✦<span class="rot"> Magia</span></button><button class="pri" id="btFim" onclick="fimTurno()">Encerrar turno</button></div>
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
@@ -2672,6 +2683,27 @@ function magiaDoBotao(){
   J.insp=null;J.menuAlvo=null;J.invHex=null;J.invocando=null;J.invocHex=null;
   abrirMagia(true);
 }
+// ----- Botão 👣: próxima criatura que ainda não agiu -----
+// conta quem ainda não tem o ✓ (inclui quem andou e ainda pode atacar). O mestre fica de fora, e quem está
+// sob Sono/Petrificar também (começa o turno já marcado como "agiu").
+const criaturasPendentes=()=>J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.agiu);
+// cada clique vai para a pendente mais perto da atual, sem repetir até ter passado por todas
+function proximaCriatura(){
+  if(J.vez!==0||J.ocupado||J.fim||CENA)return;
+  const ps=criaturasPendentes();if(!ps.length)return;
+  if(J.mg||J.fz)sairMagia();
+  if(J.evo)J.evo=null;
+  J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=null;J.insp=null;J.menuAlvo=null;
+  if(!J.proxVistos||J.proxVistos.turno!==J.turno)J.proxVistos={turno:J.turno,ids:new Set()};
+  const vistos=J.proxVistos.ids,atual=J.sel;
+  if(atual)vistos.add(atual.id);
+  let livres=ps.filter(u=>!vistos.has(u.id)&&u!==atual);
+  if(!livres.length){vistos.clear();livres=ps.filter(u=>u!==atual);if(!livres.length)livres=ps;}
+  const ref=atual||mestreDe(0)||livres[0];
+  livres.sort((a,b)=>d6c(a.c,a.r,ref.c,ref.r)-d6c(b.c,b.r,ref.c,ref.r));
+  const u=livres[0];vistos.add(u.id);
+  desseleciona();seleciona(u);atualiza();
+}
 function abrirForca(){if(!podeForca(0)||J.ocupado)return;desseleciona();J.mg=null;J.fz={fase:'alvo'};J.prevArea=null;atualiza();}
 // aberta pelo menu do mestre, sair volta ao mestre; aberta pelo botão ✦, só fecha
 function sairMagia(){J.mg=null;J.fz=null;J.prevArea=null;const m=mestreDe(0);if(m&&!J.mgBotao)seleciona(m);J.mgBotao=false;atualiza();}
@@ -2739,8 +2771,13 @@ function invocarRapido(){
 function abrirInvHex(k){desseleciona();J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=k;atualiza();}
 function menuMestre(modo){J.menuMestre=modo;atualiza();}
 // Evoluir (menu do mestre): lista das criaturas iniciais → duas formas pelo histórico → fixa
-function abrirEvo(){if(J.vez!==0||J.ocupado||!podeEvoluir(0))return;desseleciona();J.mg=null;J.fz=null;J.invHex=null;J.evo={fase:'lista'};atualiza();}
-function sairEvo(){J.evo=null;const m=mestreDe(0);if(m)seleciona(m);atualiza();}
+// aberta pela tela de invocar, a evolução volta para ela ao sair (e a lista já mostra a forma evoluída)
+function abrirEvo(){if(J.vez!==0||J.ocupado||!podeEvoluir(0))return;J.evoDeInv=J.invHex;desseleciona();J.mg=null;J.fz=null;J.invHex=null;J.evo={fase:'lista'};atualiza();}
+function sairEvo(){
+  J.evo=null;const v=J.evoDeInv;J.evoDeInv=null;
+  if(v!=null&&hexesInvocacao(0).has(v)){J.invHex=v;atualiza();return;}
+  const m=mestreDe(0);if(m)seleciona(m);atualiza();
+}
 function evoBase(base){if(!J.evo||J.evo.fase!=='lista'||J.evoFixa?.[0]?.[base])return;J.evo={fase:'ramo',base};atualiza();}
 function escolheEvo(para){
   const g=J.evo;if(!g||g.fase!=='ramo'||J.ocupado||J.mp[0]<EVO_CUSTO||J.evoFixa?.[0]?.[g.base])return;
@@ -2918,6 +2955,15 @@ function ameaca(k,u){
   }
   return s;
 }
+// quanto vale para o lado l tomar a torre k: tomar de um rival vale mais que uma neutra (ele perde renda);
+// sem magias ou sem Força ainda, cada torre vale mais (a conquista é que libera)
+function valorTorre(k,l){
+  if(J.ter[k]!=='torre'||J.dono[k]===l)return 0;
+  let v=J.dono[k]==null?1:1.5;
+  if(J.magiaLib&&!J.magiaLib[l])v+=0.6;
+  else if(J.forcaLib&&!J.forcaLib[l])v+=0.3;
+  return v;
+}
 function distanciasAte(alvoK,esp){
   const D=new Map([[alvoK,0]]),fila=[alvoK];
   while(fila.length){
@@ -2936,7 +2982,9 @@ async function agirIA(u,reservas){
   if(!J.un.includes(u)||J.fim||u.lado!==J.vez||u.agiu)return; // preso por Sono/Petrificar, ou já não é dele
   await focar(u.c,u.r);
   const eu=ESP[u.esp],ehMestre=!!eu.mestre;
-  const A=alcancaveis(u);
+  let A=alcancaveis(u);
+  // o mestre segue a mesma regra do jogador: nos 3 primeiros turnos fica no castelo (só ataca de onde está)
+  if(ehMestre&&J.turno<=3)A={...A,dest:new Set([K(u.c,u.r)])};
   const inimigos=J.un.filter(e=>e.lado!==u.lado);
   let melhor=null;
   // Torre do Cristal: quem está nela não sai (só ataca dali); quem alcança a torre vazia neste turno vai para ela
@@ -2960,28 +3008,51 @@ async function agirIA(u,reservas){
       s+=defTer(u.esp,terEvK(u.lado,k))*10;
       // Torre do Cristal: expulsar quem está nela vale muito; atacar de cima dela é bom; sair dela para atacar, não
       if(J.cristal){if(kE===J.cristal.k)s+=25+(mata?30:0);if(k===J.cristal.k)s+=20;else if(!ehMestre&&K(u.c,u.r)===J.cristal.k)s-=15;}
+      // atacar de cima de uma torre que ainda não é nossa: ataca e captura no mesmo turno
+      if(k!==CR&&!ehMestre)s+=valorTorre(k,u.lado)*22;
+      // inimigo parado numa torre nossa: expulsá-lo protege a renda
+      if(J.ter[kE]==='torre'&&J.dono[kE]===u.lado&&kE!==CR)s+=12+(mata?15:0);
       if(ehMestre)s-=perigo*1.2;
       if(!melhor||s>melhor.s)melhor={s,k,e};
     }
   }
-  if(melhor&&melhor.s>0){
+  // torre comum ao alcance neste turno (vazia e não nossa): a de mais valor, e a mais segura no empate
+  let torreJa=null;
+  if(!ehMestre&&!naTorre&&!tomaTorre){ // o mestre não sai para tomar torres: isso é trabalho das criaturas
+    let bv=0;
+    for(const k of A.dest){
+      if(k===CR||unidadeEm(...DK(k)))continue;
+      const v=valorTorre(k,u.lado);if(!v)continue;
+      const sv=v*40-ameaca(k,u)*(ehMestre?1.5:0.3);
+      if(ehMestre&&ameaca(k,u)>=u.hp*0.5)continue;
+      if(sv>bv){bv=sv;torreJa=k;}
+    }
+  }
+  // só troca a torre por um ataque se ele for realmente bom (matar, defender a base ou já atacar de cima da torre)
+  const limiar=torreJa!=null?28:0;
+  if(melhor&&melhor.s>limiar){
     await moverPara(u,melhor.k,A.prev);
     await atacar(u,melhor.e);
     return;
   }
   if(tomaTorre){await moverPara(u,CR,A.prev);u.agiu=true;return;}
+  if(torreJa!=null){await moverPara(u,torreJa,A.prev);u.agiu=true;return;}
+  if(melhor&&melhor.s>0){
+    await moverPara(u,melhor.k,A.prev);
+    await atacar(u,melhor.e);
+    return;
+  }
   // sem ataque bom: andar até um objetivo
   let alvoK=null;
   const meuForte=J.ter.findIndex((t,k)=>t==='cast'&&J.dono[k]===u.lado);
   if(ehMestre){
-    // se ainda pode invocar, volta para o castelo (cercado de fortalezas)
-    const querInvocar=podeTerMais(u.lado)&&invocaveis(u.lado).some(s=>ESP[s].custo<=J.mp[u.lado]+saldo(u.lado))&&saldo(u.lado)>=3;
-    let best=null,bd=Infinity;
-    J.ter.forEach((t,k)=>{if(t!=='torre'||J.dono[k]===u.lado)return;const [c,r]=DK(k),[fc,fr]=DK(meuForte),d=d6c(c,r,fc,fr);if(d<=4&&d<bd){bd=d;best=k;}});
-    alvoK=!querInvocar&&best!=null&&ameaca(best,u)<u.hp*0.4?best:meuForte;
+    // o mestre não sai em campanha: sem ataque bom, volta (ou fica) no castelo, de onde invoca
+    alvoK=meuForte;
   }else{
     let best=null,bd=Infinity;
-    J.ter.forEach((t,k)=>{if(t!=='torre'||J.dono[k]===u.lado||reservas.has(k))return;const [c,r]=DK(k),d=d6c(c,r,u.c,u.r);if(d<bd){bd=d;best=k;}});
+    // torre mais atraente: perto e valiosa (uma do rival vale "andar" umas casas a mais que uma neutra)
+    let bsT=Infinity;
+    J.ter.forEach((t,k)=>{if(t!=='torre'||J.dono[k]===u.lado||reservas.has(k))return;const [c,r]=DK(k),d=d6c(c,r,u.c,u.r),sT=d/valorTorre(k,u.lado);if(sT<bsT){bsT=sT;bd=d;best=k;}});
     // casa livre da área urbana inimiga: vira alvo se estiver tão perto quanto a torre, ou se o cerco já começou
     let bu=null,bdu=Infinity;
     for(const k of rivais(u.lado).flatMap(urbanaDe)){
@@ -2997,8 +3068,8 @@ async function agirIA(u,reservas){
       if(reservas.cristal?.has(u.id))alvoK=C.k;
     }
     if(alvoK!=null){}
-    else if(bu!=null&&(cercoJa||bdu<=bd||bd>8)){alvoK=bu;reservas.add(bu);}
-    else if(best!=null&&bd<=8){alvoK=best;reservas.add(best);}
+    else if(bu!=null&&(cercoJa||bdu*1.6<bd||bd>12)){alvoK=bu;reservas.add(bu);}
+    else if(best!=null&&bd<=12){alvoK=best;reservas.add(best);}
     else{const m=mestreMaisPerto(u.lado,u.c,u.r);if(m)alvoK=K(m.c,m.r);}
     // já está numa casa urbana inimiga: fica e segura a posição
     const kAqui=K(u.c,u.r);
@@ -4506,11 +4577,20 @@ function atualiza(){
   {const bm=document.getElementById('btMagia'),ok=minha&&J.invocou?.[0]&&podeMagia(0);
    bm.classList.toggle('ativo',!!ok);
    bm.classList.toggle('brilha',!!ok&&!J.mg&&magiasDe(0).some(id=>J.mp[0]>=MAGIAS[id].custo&&magiaDisponivel(0,id)));}
+  // botão 👣: quantas criaturas suas ainda podem agir neste turno
+  {const n=minha?criaturasPendentes().length:0;
+   document.getElementById('btProx').classList.toggle('ativo',n>0);
+   document.getElementById('btProxN').textContent=n||'';}
   const bt=document.getElementById('btFim');
   // nada mais a fazer (criaturas já agiram, não dá para invocar e o mestre não tem quem atacar): o botão fica dourado
   {const m=mestreDe(0),mestreAtaca=m&&!m.agiu&&alvosDesde(m,m.c,m.r).length>0;
    bt.disabled=!minha;bt.classList.toggle('brilha',minha&&turnoEsgotado()&&!mestreAtaca);}
   bt.textContent=J.fim?'Fim de jogo':J.vez===0?'Encerrar turno':`Vez ${doM(J.vez)}…`;
+  // celular deitado: a ficha do rodapé termina antes dos botões da direita (que crescem com 👣 e ✦)
+  if(document.documentElement.classList.contains('paisagem')){
+    const lf=document.getElementById('linhaFim').getBoundingClientRect();
+    if(lf.width)document.documentElement.style.setProperty('--dirBotoes',Math.round(innerWidth-lf.left+6)+'px');
+  }
   // dicas do que fazer agora vão para o topo da caixa de informações
   let dicaAcao='';
   if(J.invocando)dicaAcao=`<div class="prev">Escolha uma casa amarela para invocar ${ESP[J.invocando].nome}.</div>`;
@@ -4580,7 +4660,7 @@ function menus(){
   const mm=document.getElementById('menuM'),ps=document.getElementById('passar');
   const minha=J.vez===0&&!J.ocupado&&!J.fim;
   const m=mestreDe(0);
-  mm.style.width='';mm.classList.remove('grade','magias');
+  mm.style.width='';mm.classList.remove('grade','magias','mg1','mg2');
   if(minha&&m&&J.mg?.fase==='lista'){
     // só aparecem as magias que têm algum alvo possível agora
     // grade de cartões: ícone pelo tipo, nome e custo; a descrição aparece depois de escolher (faixa do topo)
@@ -4592,7 +4672,7 @@ function menus(){
     }
     h+='</div>';
     if(!lista.length)h+='<div class="vez" style="margin-top:8px">Nenhuma magia tem alvo agora.</div>';
-    mm.innerHTML=h;mm.classList.add('magias');mm.style.width='280px';mm.style.display='block';posMenu(mm,m);
+    mm.innerHTML=h;mm.classList.add('magias');if(lista.length&&lista.length<3)mm.classList.add('mg'+lista.length);mm.style.width='280px';mm.style.display='block';posMenu(mm,m);
   }else if(minha&&m&&J.evo?.fase==='lista'){
     let h=`<div class="mmTopo"><div class="tit" style="color:#6ee08a">▲ Evoluir · ${EVO_CUSTO} MP <span class="vez">· ${mpHtml(0)}</span></div><button class="mmX" onclick="sairEvo()" aria-label="Fechar">✕</button></div>
       <div class="vez" style="margin-top:4px">Escolha uma criatura inicial. A forma escolhida fica fixa: ao invocar, ela já nasce evoluída.</div><div class="invG">`;
@@ -4655,12 +4735,14 @@ function menus(){
   }else if(minha&&J.invHex!=null){
     const [hc,hr]=DK(J.invHex);
     // grade de cartões (desenho, nome, elemento e custo), sem rolagem; os números da criatura ficam na ficha, depois de invocar
-    let h=`<div class="tit" style="color:var(--p0)">Invocar</div><div class="vez">${mpHtml(0)} · exército ${criaturas(0)}/${limite(0)}</div><div class="invG">`;
+    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p0)">Invocar</div><div class="vez">${mpHtml(0)} · exército ${criaturas(0)}/${limite(0)}</div></div><button class="mmX" onclick="J.invHex=null;atualiza()" aria-label="Fechar">✕</button></div><div class="invG">`;
     for(const s of invocaveis(0)){
       const e=ESP[s],ok=J.mp[0]>=e.custo&&podeTerMais(0);
       h+=`<button onclick="escolherInvocacao('${s}')" ${ok?'':'disabled'}><b class="custo">${e.custo}</b>${iconeSpr(s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${EL[e.el]}">${ELN[e.el]}</small></button>`;
     }
-    h+=`</div>${podeTerMais(0)?'':`<div class="vez">${motivoLimite()}</div>`}${hexesInvocacao(0).size>1?`<div class="vez" style="margin-top:4px">Para invocar em outro lugar, ${TOQUE()?'toque':'clique'} em outra construção com borda dourada.</div>`:''}<button onclick="J.invHex=null;atualiza()">✕ Fechar</button>`;
+    h+=`</div>${podeTerMais(0)?'':`<div class="vez">${motivoLimite()}</div>`}`;
+    // Evoluir: o mesmo do menu do mestre, ao alcance de quem está escolhendo o que invocar
+    if(podeEvoluir(0))h+=`<button class="btEvoInv" onclick="abrirEvo()" title="Fixa a forma de estágio 1 de uma criatura inicial: dali em diante ela já nasce evoluída."><span style="color:#6ee08a">▲</span> Evoluir · ${EVO_CUSTO} MP</button>`;
     mm.classList.add('grade');
     mm.innerHTML=h;mm.style.display='block';posMenu(mm,{c:hc,r:hr});
   }else if(minha&&J.menuAlvo&&J.un.includes(J.menuAlvo)){
@@ -4671,10 +4753,11 @@ function menus(){
     let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p${u.lado})">${nome(u)}</div><div class="vez">Vida ${u.hp}/${e.hp} · ${mpHtml(0)}</div>${efs.length?`<div class="vez" style="color:#d6c2ff">${efs.join(' · ')}</div>`:''}</div><button class="mmX" onclick="J.menuAlvo=null;atualiza()" aria-label="Fechar">✕</button></div>`;
     const volta=u.lado===0?'':`<button onclick="J.menuAlvoFase=null;atualiza()">← Voltar</button>`; // criatura sua: só a lista, o ✕ fecha
     if(fase==='magia'){
-      h+=`<div class="vez" style="margin-top:6px;color:#c58cff">✦ Magia · uma por turno</div><div class="inv">`;
+      // mesmos cartões do menu de magias do mestre: ícone, nome e custo (a descrição fica no title)
+      h+=`<div class="acoes mgGrade">`;
       for(const id of magiasNoAlvo(u)){
-        const g=MAGIAS[id],ok=J.mp[0]>=g.custo;
-        h+=`<button onclick="magiaNoAlvo('${id}')" ${ok?'':'disabled'} title="${g.desc}${ok?'':' (MP insuficiente)'}"><span><span>${g.nome}${g.ordem?' <span style="color:#f2c14e">★</span>':''}</span><strong>${g.custo}</strong></span><small>${g.desc}</small></button>`;
+        const g=MAGIAS[id],ok=J.mp[0]>=g.custo,[ic,cor]=ICONE_MAGIA[id]||['✦','#c58cff'];
+        h+=`<button class="acao mgCarta${g.ordem?' exclusiva':''}" onclick="magiaNoAlvo('${id}')" ${ok?'':'disabled'} title="${g.desc}${g.ordem?` (exclusiva ${doM(0)})`:''}${ok?'':' (MP insuficiente)'}">${g.ordem?'<span class="estrela">★</span>':''}<span class="ic" style="color:${cor}">${ic}</span><b>${g.nome}</b><span class="mpCusto${ok?'':' falta'}">${g.custo} MP</span></button>`;
       }
       h+=`</div>${volta}`;
     }else if(fase==='forca'){
@@ -4690,7 +4773,8 @@ function menus(){
       if(forcaPronta(u))h+=`<button class="acao" onclick="J.menuAlvoFase='forca';atualiza()"><span class="ic" style="color:#ffa050">⚡</span><b>Força Elemental</b><small>${CUSTO_FORCA} MP</small></button>`;
       h+='</div>';
     }
-    mm.innerHTML=h;mm.style.width=fase?'260px':'220px';mm.style.display='block';posMenu(mm,u);
+    if(fase==='magia'){const n=magiasNoAlvo(u).length;mm.classList.add('magias');if(n&&n<3)mm.classList.add('mg'+n);}
+    mm.innerHTML=h;mm.style.width=fase==='magia'?'280px':fase?'260px':'220px';mm.style.display='block';posMenu(mm,u);
   }else mm.style.display='none';
 
   // fim de turno: sem caixa sobre o mapa; quem avisa é o Encerrar turno dourado (veja atualiza)
@@ -4842,6 +4926,7 @@ addEventListener('keydown',ev=>{
   if(P){ev.preventDefault();CAM.x+=P[0]*50/CAM.z;CAM.y+=P[1]*50/CAM.z;CAM.mao=true;limitaCam();}
   if(ev.key==='+'||ev.key==='=')mudaZoom(1);if(ev.key==='-')mudaZoom(-1);
   if((ev.key==='m'||ev.key==='M')&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&J)magiaDoBotao();
+  if((ev.key==='n'||ev.key==='N')&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&J)proximaCriatura();
 });
 addEventListener('resize',()=>{if(J)menus();});
 // No toque não existe "parar o mouse em cima": tocar num item com explicação (title) mostra o texto num balão.
