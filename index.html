@@ -63,6 +63,17 @@ body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,"Seg
 #menuM.magias.mg2 .mgGrade{grid-template-columns:1fr 1fr}
 .pc #menuM.magias.mg1,#menuM.magias.mg1{width:220px!important}
 .pc #menuM.magias.mg2,#menuM.magias.mg2{width:280px!important}
+/* celular deitado: pouca altura e muita largura. As magias se espalham em até 4 colunas, os cartões ficam mais
+   baixos e, se ainda assim faltar altura, a caixa rola por dentro em vez de sair da tela */
+.paisagem #menuM.magias{width:min(500px,94vw)!important;max-height:calc(100vh - 66px);max-height:calc(100dvh - 66px);overflow-y:auto}
+.paisagem #menuM.magias .mgGrade{grid-template-columns:repeat(4,1fr)}
+.paisagem #menuM.magias.mg3{width:min(390px,94vw)!important}
+.paisagem #menuM.magias.mg3 .mgGrade{grid-template-columns:repeat(3,1fr)}
+.paisagem #menuM.magias.mg2{width:280px!important}
+.paisagem #menuM.magias.mg2 .mgGrade{grid-template-columns:1fr 1fr}
+.paisagem #menuM.magias.mg1{width:220px!important}
+.paisagem #menuM.magias.mg1 .mgGrade{grid-template-columns:1fr}
+.paisagem #menuM .mgCarta,.paisagem #menuM .mgGrade .mgCarta:last-child:nth-child(odd){min-height:60px;padding:5px 4px}
 #menuM .acao:disabled .ic{filter:grayscale(1);opacity:.5}
 #menuM .inv button{flex-direction:column;align-items:flex-start;gap:0}
 #menuM .inv button>span{display:flex;justify-content:space-between;width:100%}
@@ -239,6 +250,8 @@ button{touch-action:manipulation}
   #rodape{font-size:12px;gap:8px;padding:6px 8px}
   /* menus do mestre e de invocação: centralizados e largos, em vez de presos ao lado da criatura */
   #menuM{left:50%!important;top:4px!important;transform:translateX(-50%);width:min(340px,96%)!important;max-height:78vh;max-height:78dvh;overflow:auto}
+  /* menu do mestre (Invocar, Mover…): logo acima do mestre, onde o dedo já está (posição calculada em posMenu) */
+  #menuM.perto{left:var(--mx,50%)!important;top:var(--my,4px)!important;transform:none;width:min(260px,92%)!important}
   #passar,#saves{min-width:0;width:94%;max-width:94%}
   #saves.cfg{width:auto}
   #saves.cfg>.linha{position:sticky;bottom:-14px;background:var(--panel);padding:8px 0 14px;margin-bottom:-14px} /* Começar sempre à vista */
@@ -4772,8 +4785,15 @@ function posMenu(el,u){
   // a criatura fora da tela (ex.: lista aberta pelo botão ✦ com o mestre longe): o menu vai para o meio
   if(x<0||x>TW||y<0||y>TH){px=(b.width-w)/2;py=(b.height-h)/2;}
   px=Math.max(4,Math.min(px,b.width-w-4));
-  py=Math.max(PAISAGEM()?50:4,Math.min(py,b.height-h-4)); // deitado: abaixo da barra do topo
+  py=Math.max(PAISAGEM()?50:4,Math.min(py,b.height-h-(PAISAGEM()?60:4))); // deitado: entre a barra do topo e os botões de baixo
   el.style.left=px+'px';el.style.top=py+'px';
+  // celular (menu "perto"): centralizado sobre a unidade, logo acima dela; sem espaço em cima, logo abaixo
+  if(el.classList.contains('perto')){
+    let qx=x*esc-w/2,qy=(y-rz)*esc-h-6;
+    if(qy<4)qy=(y+rz)*esc+6;
+    qx=Math.max(4,Math.min(qx,b.width-w-4));qy=Math.max(4,Math.min(qy,b.height-h-4));
+    el.style.setProperty('--mx',qx+'px');el.style.setProperty('--my',qy+'px');
+  }
 }
 function motivoLimite(){
   if(noMapa()>=limMapa())return `O mapa já tem ${limMapa()} criaturas.`;
@@ -4793,11 +4813,14 @@ function dicaInvocar(){
   if(!hexesInvocacao(0).size)return 'Para invocar, fique ao lado de um castelo, fortaleza ou torre sua que esteja livre.';
   return 'Para invocar, clique numa construção sua com borda dourada.';
 }
+// troca o conteúdo de um menu só quando ele muda de fato: recriar os botões a cada atualização (ex.: o mouse
+// saindo do mapa) faz um toque que chega nesse instante cair num botão que acabou de ser jogado fora
+function poeHTML(el,h){if(el._html!==h){el.innerHTML=h;el._html=h;}}
 function menus(){
   const mm=document.getElementById('menuM'),ps=document.getElementById('passar');
   const minha=J.vez===0&&!J.ocupado&&!J.fim;
   const m=mestreDe(0);
-  mm.style.width='';mm.classList.remove('grade','magias','mg1','mg2');
+  mm.style.width='';mm.classList.remove('grade','magias','mg1','mg2','mg3','perto');
   if(minha&&m&&J.mg?.fase==='lista'){
     // só aparecem as magias que têm algum alvo possível agora
     // grade de cartões: ícone pelo tipo, nome e custo; a descrição aparece depois de escolher (faixa do topo)
@@ -4809,7 +4832,7 @@ function menus(){
     }
     h+='</div>';
     if(!lista.length)h+='<div class="vez" style="margin-top:8px">Nenhuma magia tem alvo agora.</div>';
-    mm.innerHTML=h;mm.classList.add('magias');if(lista.length&&lista.length<3)mm.classList.add('mg'+lista.length);mm.style.width='280px';mm.style.display='block';posMenu(mm,m);
+    poeHTML(mm,h);mm.classList.add('magias');if(lista.length&&lista.length<4)mm.classList.add('mg'+lista.length);mm.style.width='280px';mm.style.display='block';posMenu(mm,m);
   }else if(minha&&m&&J.evo?.fase==='lista'){
     let h=`<div class="mmTopo"><div class="tit" style="color:#6ee08a">▲ Evoluir · ${EVO_CUSTO} MP <span class="vez">· ${mpHtml(0)}</span></div><button class="mmX" onclick="sairEvo()" aria-label="Fechar">✕</button></div>
       <div class="vez" style="margin-top:4px">Escolha uma criatura inicial. A forma escolhida fica fixa: ao invocar, ela já nasce evoluída.</div><div class="invG">`;
@@ -4818,7 +4841,7 @@ function menus(){
       h+=`<button onclick="evoBase('${s}')" ${fx?'disabled':''}>${iconeSpr(fx||s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${fx?'#6ee08a':EL[e.el]}">${fx?'fixada':ELN[e.el]}</small></button>`;
     }
     h+='</div>';
-    mm.innerHTML=h;mm.classList.add('grade');mm.style.display='block';posMenu(mm,m);
+    poeHTML(mm,h);mm.classList.add('grade');mm.style.display='block';posMenu(mm,m);
   }else if(minha&&m&&J.evo?.fase==='ramo'){
     const b=J.evo.base,ops=opcoesEvo(0,b),ok=J.mp[0]>=EVO_CUSTO;
     let h=`<div class="mmTopo"><div class="tit" style="color:#6ee08a">▲ Evoluir ${ESP[b].nome}</div><button class="mmX" onclick="sairEvo()" aria-label="Fechar">✕</button></div>
@@ -4828,12 +4851,12 @@ function menus(){
       h+=`<button onclick="escolheEvo('${o.para}')" ${ok?'':'disabled'}><b class="custo">${e.custo}</b>${iconeSpr(o.para,56,'cor')}<span class="nm">${e.nome}</span><small>Vida ${e.hp} · Atq ${e.atk} · Def ${e.def} · Mov ${e.mov}</small><small style="color:#f2c14e;margin-top:3px">${o.motivo}</small></button>`;
     }
     h+=`</div><button onclick="J.evo={fase:'lista'};atualiza()">← Voltar</button>`;
-    mm.innerHTML=h;mm.classList.add('grade');mm.style.display='block';posMenu(mm,m);
+    poeHTML(mm,h);mm.classList.add('grade');mm.style.display='block';posMenu(mm,m);
   }else if(minha&&m&&J.mg?.fase==='confirma'){
     const g=MAGIAS[J.mg.id];
-    mm.innerHTML=`<div class="tit" style="color:#c58cff">✦ ${g.nome} · ${g.custo} MP</div><div class="vez" style="margin-top:4px">${g.desc}</div>
+    poeHTML(mm,`<div class="tit" style="color:#c58cff">✦ ${g.nome} · ${g.custo} MP</div><div class="vez" style="margin-top:4px">${g.desc}</div>
       <div class="vez" style="margin-top:4px">Área destacada em roxo no mapa.</div>
-      <button class="pri" onclick="confirmaMagia()">Lançar</button><button onclick="voltaListaMagia()">✕ Voltar</button>`;
+      <button class="pri" onclick="confirmaMagia()">Lançar</button><button onclick="voltaListaMagia()">✕ Voltar</button>`);
     mm.style.width='260px';mm.style.display='block';posMenu(mm,m);
   }else if(minha&&J.fz?.fase==='elem'){
     const [hc,hr]=DK(J.fz.k),u=unidadeEm(hc,hr);
@@ -4843,7 +4866,7 @@ function menus(){
       h+=`<button onclick="escolheElemental('${el}')" ${hp>0?'':'disabled'}><span><span style="color:${EL[el]}">● ${ESP[ELEMENTAIS[el]].nome}</span><strong>${hp}/100</strong></span><small>${hp>0?`Acerto ${ch}%${mv>1?' · vantagem':mv<1?' · desvantagem':''}${u&&forcaContra(u)<1?` · dano ×${String(forcaContra(u)).replace('.',',')} (nível ${ESP[u.esp].tier})`:''}`:'Desfeito nesta partida'}</small></button>`;
     }
     h+=`</div><button onclick="J.fz={fase:'alvo'};atualiza()">✕ Voltar</button>`;
-    mm.innerHTML=h;mm.style.display='block';posMenu(mm,{c:hc,r:hr});
+    poeHTML(mm,h);mm.style.display='block';posMenu(mm,{c:hc,r:hr});
   }else if(minha&&m&&J.sel===m&&menuAberto()){
     // cabeçalho (nome, MP e ✕) e uma grade de ações; cada ação só aparece quando já faz sentido na partida
     // só a grade de ações (o nome do mestre e a mana já estão no placar); o ✕ aparece quando há mais de uma ação
@@ -4869,7 +4892,7 @@ function menus(){
     const nAc=(h.match(/class="acao"/g)||[]).length;
     h=(nAc>1?`<div class="mmTopo" style="justify-content:flex-end;padding-bottom:0;border:0"><button class="mmX" onclick="desseleciona();atualiza()" aria-label="Fechar">✕</button></div>`:'')
       +`<div class="acoes"${nAc>1?'':' style="grid-template-columns:1fr;margin-top:0"'}>${h}</div>`;
-    mm.innerHTML=h;mm.style.display='block';posMenu(mm,m);
+    mm.classList.add('perto');poeHTML(mm,h);mm.style.display='block';posMenu(mm,m);
   }else if(minha&&J.invHex!=null){
     const [hc,hr]=DK(J.invHex);
     // grade de cartões (desenho, nome, elemento e custo), sem rolagem; os números da criatura ficam na ficha, depois de invocar
@@ -4882,7 +4905,7 @@ function menus(){
     // Evoluir: o mesmo do menu do mestre, ao alcance de quem está escolhendo o que invocar
     if(podeEvoluir(0))h+=`<button class="btEvoInv" onclick="abrirEvo()" title="Fixa a forma de estágio 1 de uma criatura inicial: dali em diante ela já nasce evoluída."><span style="color:#6ee08a">▲</span> Evoluir · ${EVO_CUSTO} MP</button>`;
     mm.classList.add('grade');
-    mm.innerHTML=h;mm.style.display='block';posMenu(mm,{c:hc,r:hr});
+    poeHTML(mm,h);mm.style.display='block';posMenu(mm,{c:hc,r:hr});
   }else if(minha&&J.menuAlvo&&J.un.includes(J.menuAlvo)){
     // criatura inimiga tocada (ou sua, sob Sono/Petrificar): magias de alvo único que valem nela e a Força, lançadas direto nela
     // primeiro só os botões Magia e Força; cada um abre a sua lista. Já usada no turno, a opção some.
@@ -4911,8 +4934,8 @@ function menus(){
       if(forcaPronta(u))h+=`<button class="acao" onclick="J.menuAlvoFase='forca';atualiza()"><span class="ic" style="color:#ffa050">⚡</span><b>Força Elemental</b><small>${CUSTO_FORCA} MP</small></button>`;
       h+='</div>';
     }
-    if(fase==='magia'){const n=magiasNoAlvo(u).length;mm.classList.add('magias');if(n&&n<3)mm.classList.add('mg'+n);}
-    mm.innerHTML=h;mm.style.width=fase==='magia'?'280px':fase?'260px':'220px';mm.style.display='block';posMenu(mm,u);
+    if(fase==='magia'){const n=magiasNoAlvo(u).length;mm.classList.add('magias');if(n&&n<4)mm.classList.add('mg'+n);}
+    poeHTML(mm,h);mm.style.width=fase==='magia'?'280px':fase?'260px':'220px';mm.style.display='block';posMenu(mm,u);
   }else mm.style.display='none';
 
   // fim de turno: sem caixa sobre o mapa; quem avisa é o Encerrar turno dourado (veja atualiza)
